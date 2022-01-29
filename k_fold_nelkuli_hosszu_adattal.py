@@ -81,7 +81,7 @@ class DataRead:
             # print("segment", segment)
             test_segment = False
             if segment + (LEN_OF_SEGMENTS - DATA_STRIDE) + LEN_OF_SEGMENTS <= start_of_last:
-                if segment % (LEN_OF_SEGMENTS * TEST_DATA_PART_RECIP) == 0:
+                if segment % (LEN_OF_SEGMENTS * TEST_DATA_PART_RECIP) == 0 * LEN_OF_SEGMENTS:
                     test_segment = True
                     #print("test0", segment, (LEN_OF_SEGMENTS * TEST_DATA_PART_RECIP))
                     target = my_testing_data
