@@ -18,7 +18,7 @@ LEN_OF_INPUT = 4 * LEN_OF_SEGMENTS
 LEN_OF_OUTPUT = 5 * LEN_OF_SEGMENTS
 DATA_STRIDE = 10
 TEST_DATA_PART_RECIP = 5
-TESTED_BIT = 1             # kisebb kell legyen a TEST_DATA_PART_RECIP-nel
+TESTED_BIT = 2             # kisebb kell legyen a TEST_DATA_PART_RECIP-nel
 time_ = int(time.time())
 print("time:", time_)
 glob_train_segs = []
@@ -31,7 +31,7 @@ y_glob_test_tmp = []
 
 class Data_read():
         
-    def read_from_raw_data(self, source, start_of_last, max_position_per_3):
+    def read_from_raw_data(self, source, start_of_last):
         print("Data preparation")
         mat = scipy.io.loadmat(source)
         
@@ -102,18 +102,27 @@ class Data_read():
                 # print("X norm rot:", x_norm_rot, "Y norm rot:", y_norm_rot)
                 
                 # normalise between -3 and 3
-                my_input.append((x_norm_rot / max_position_per_3) + rand_x)
-                my_input.append((y_norm_rot / max_position_per_3) + rand_y)
-                my_input.append(Velocity [segment] / 10)
-                my_input.append(Orientation [segment])
+                my_input.append((x_norm_rot / 30) + rand_x) #30, 100
+                my_input.append((y_norm_rot / 30) + rand_y)
+                my_input.append(Velocity [segment] / 100) #100, 10
+                my_input.append(Orientation [segment] / 30) #30, 1
+                # my_input.append([(x_norm_rot / 30) + rand_x, (y_norm_rot / 30) + rand_y, 
+                #                   Velocity [segment] / 100, Orientation [segment] / 30])
+                # my_input.append([(x_norm_rot / 1) + rand_x, (y_norm_rot / 1) + rand_y, 
+                #                   Velocity [segment] / 1, Orientation [segment] / 1])
                 
                 my_output.append(Fy_FL [segment + i] / 1700)
                 my_output.append(Fy_FR [segment + i] / 1700)
                 my_output.append(Fy_RL [segment + i] / 1700)
                 my_output.append(Fy_RR [segment + i] / 1700)
                 my_output.append(WheelAngle [segment + i] * 60)
+                # # my_output.append([Fy_FL [segment + i] / 1700, Fy_FR [segment + i] / 1700,
+                #                   Fy_RL [segment + i] / 1700, Fy_RR [segment + i] / 1700, 
+                #                   WheelAngle [segment + i] * 60])
+                
             
-            # print(chance_of_test_data, chance_of_test_data == 1)
+            # if len(my_input) != 400:
+            #     print(len(my_input))
             # A [:] nelkul csak referencia atadas tortenik, .clear()-kor torli innen is
             if trg == "test":
                 segment += LEN_OF_SEGMENTS - DATA_STRIDE
@@ -122,25 +131,27 @@ class Data_read():
                 glob_train_segs.append([x_glob_train_tmp[:], y_glob_train_tmp[:]])
             
             target.append([np.array(my_input), np.array(my_output)])
-            # print(segment, "my_out", np.array(my_output), np.array(my_output).shape)
-            # print("my_in", np.array(my_output).shape, np.array(my_input))
+            #print(segment, "my_out", np.array(my_output), np.array(my_output).shape)
+            #print("my_in", np.array(my_output).shape, np.array(my_input))
             
             segment += DATA_STRIDE
-            
-        print("test data", np.array(my_testing_data).shape)
-        print("train data", np.array(my_training_data).shape)
+        
+        print("done, saving")
+        #print("test data", np.array(my_testing_data).shape)
+        #print("train data", np.array(my_training_data).shape)
         np.random.shuffle(my_testing_data)
-        np.save("my_testing_data.npy", my_testing_data)
+        np.save("my_testing_data_1d_XYVO_better_skale.npy", my_testing_data)
         np.random.shuffle(my_training_data)
-        np.save("my_training_data.npy", my_training_data)
+        np.save("my_training_data_1d_XYVO_better_skale.npy", my_training_data)
         
 dr = Data_read()
-dr.read_from_raw_data("meas01.mat", 10118 - LEN_OF_SEGMENTS, 100)
-#dr.read_from_raw_data("meas02.mat", 10305 - LEN_OF_SEGMENTS, 100)
-#dr.read_from_raw_data("data_zoli_carmaker_leaf_02.mat", 137238 - LEN_OF_SEGMENTS, 1000)
+#dr.read_from_raw_data("meas01.mat", 10118 - LEN_OF_SEGMENTS)
+#dr.read_from_raw_data("meas02.mat", 10305 - LEN_OF_SEGMENTS)
+dr.read_from_raw_data("data_zoli_carmaker_leaf_02.mat", 137238 - LEN_OF_SEGMENTS)
 
 
 # Vizualizacio
+print("done, visualizing")
 def visualization(only_tests=False, only_one=False, which_one=0):
     fig = plt.figure()
     ax0 = plt.subplot2grid((1, 1), (0, 0))
@@ -167,10 +178,10 @@ def visualization(only_tests=False, only_one=False, which_one=0):
                     if i % 4 == 1:
                         y_norm_.append(seg[0][i])
     
-    fig = plt.figure()
-    ax1 = plt.subplot2grid((1, 1), (0, 0))
-    ax1.plot(x_norm_, y_norm_)
-    plt.show()
+        fig = plt.figure()
+        ax1 = plt.subplot2grid((1, 1), (0, 0))
+        ax1.plot(x_norm_, y_norm_)
+        plt.show()
     
 visualization()
 visualization(only_one=True)
