@@ -16,10 +16,12 @@ import torch.nn as nn
 import torch.nn.functional as F
 import time
 
-NET_TYPE =   "fully connected"
-MODEL_NAME = f"efop__1634465590"
-LABEL_NAME = f"cnn_conv2_k=4_k=5_dil=4_lr=0.0005__{int(time.time())}"
-print(MODEL_NAME)
+NET_TYPE =   "fully connected"   # "convolutional" or "fully connected"
+TIME__ = 1647473594
+TRAINING_NAME = "efop__" + str(TIME__)
+LABEL_NAME = f"fc__{int(time.time())}"
+print("")
+print(TRAINING_NAME)
 device = torch.device("cpu")
 
 # adat elokeszites
@@ -29,8 +31,8 @@ LEN_OF_INPUT = 4 * LEN_OF_SEGMENTS
 LEN_OF_OUTPUT = 5 * LEN_OF_SEGMENTS
 DATA_STRIDE = 10
 
-shuffled_training_data = np.load("my_training_data.npy", allow_pickle=True)
-shuffled_testing_data = np.load("my_testing_data.npy", allow_pickle=True)
+shuffled_training_data = np.load("my_training_data_1d_XYVO_better_skale.npy", allow_pickle=True)
+shuffled_testing_data = np.load("my_testing_data_1d_XYVO_better_skale.npy", allow_pickle=True)
 my_X = torch.Tensor([i[0] for i in shuffled_training_data]).view(-1, LEN_OF_INPUT)
 my_X_t = torch.Tensor([i[0] for i in shuffled_testing_data]).view(-1, LEN_OF_INPUT)
 my_y = torch.Tensor([i[1] for i in shuffled_training_data]).view(-1, LEN_OF_OUTPUT)
@@ -39,7 +41,7 @@ my_test_X_l = my_X_t
 my_test_y_l = my_y_t
 my_train_X_l = my_X
 my_train_y_l = my_y
-    
+
 my_test_X, my_test_y, my_train_X, my_train_y = my_test_X_l, my_test_y_l, my_train_X_l, my_train_y_l
 
 # GPU
@@ -61,6 +63,17 @@ class Net_conv(nn.Module):
         nn.init.kaiming_uniform_(self.conv1.weight, mode='fan_in', nonlinearity='relu')
         self.conv2 = nn.Conv1d(32, 64, kernel_size=5, dilation=1, padding=2)
         nn.init.kaiming_uniform_(self.conv2.weight, mode='fan_in', nonlinearity='relu')
+        self.conv3 = nn.Conv1d(64, 64, kernel_size=5, dilation=1, padding=2)
+        nn.init.kaiming_uniform_(self.conv3.weight, mode='fan_in', nonlinearity='relu')
+        self.conv4 = nn.Conv1d(64, 64, kernel_size=5, dilation=1, padding=2)
+        nn.init.kaiming_uniform_(self.conv4.weight, mode='fan_in', nonlinearity='relu')
+        self.conv5 = nn.Conv1d(64, 64, kernel_size=5, dilation=1, padding=2)
+        nn.init.kaiming_uniform_(self.conv5.weight, mode='fan_in', nonlinearity='relu')
+        
+        self.conv6 = nn.Conv1d(16, 128, kernel_size=5, dilation=1, padding=2)
+        nn.init.kaiming_uniform_(self.conv6.weight, mode='fan_in', nonlinearity='relu')
+        self.conv7 = nn.Conv1d(128, 64, kernel_size=5, dilation=1, padding=2)
+        nn.init.kaiming_uniform_(self.conv7.weight, mode='fan_in', nonlinearity='relu')
         
         x = torch.randn(LEN_OF_INPUT).view(-1, 1, LEN_OF_INPUT)
         self._to_linear = None
@@ -72,12 +85,16 @@ class Net_conv(nn.Module):
         nn.init.kaiming_uniform_(self.fc2.weight, mode='fan_in', nonlinearity='relu')
         
     def convs(self, x):
-        x = F.max_pool1d(F.relu(self.conv1(x)), (10))
-        # print("\n")
-        # print("1", x[0].shape, x[0], x)
-        x = F.max_pool1d(F.relu(self.conv2(x)), (10))
-        # print("2", x[0].shape, x[0], x)
-        # x = F.max_pool1d(F.relu(self.conv3(x)), (10))
+        x = F.max_pool1d(F.relu(self.conv1(x)), (3))
+        #print("\n")
+        #print("1", x[0].shape, x[0], x)
+        x = F.max_pool1d(F.relu(self.conv2(x)), (3))
+        #print("2", x[0].shape, x[0], x)
+        x = F.max_pool1d(F.relu(self.conv3(x)), (3))
+        #x = F.max_pool1d(F.relu(self.conv4(x)), (3))
+        #x = F.max_pool1d(F.relu(self.conv5(x)), (3))
+        #x = F.max_pool1d(F.relu(self.conv6(x)), (3))
+        #x = F.max_pool1d(F.relu(self.conv7(x)), (3))
         # hat ezt kiszamolni nem lett volna konnyu. Ezert kell kiprobalni random adattal
         
         if self._to_linear == None:
@@ -114,21 +131,16 @@ class Net_fc(nn.Module):
         nn.init.kaiming_uniform_(self.fc1.weight, mode='fan_in', nonlinearity='relu')
         self.fc2 = nn.Linear(512, 1024)
         nn.init.kaiming_uniform_(self.fc2.weight, mode='fan_in', nonlinearity='relu')
-        self.fc3 = nn.Linear(1024, 4096)
+        self.fc3 = nn.Linear(1024, 1024)
         nn.init.kaiming_uniform_(self.fc3.weight, mode='fan_in', nonlinearity='relu')
-        self.fc4 = nn.Linear(4096, 1024)
+        self.fc4 = nn.Linear(1024, 512)
         nn.init.kaiming_uniform_(self.fc4.weight, mode='fan_in', nonlinearity='relu')
-        # self.fc5 = nn.Linear(1024, 2048)
-        # self.fc6 = nn.Linear(2048, 1024)
-        self.fc_last = nn.Linear(1024, LEN_OF_OUTPUT)
+        self.fc5 = nn.Linear(512, 512)
+        nn.init.kaiming_uniform_(self.fc5.weight, mode='fan_in', nonlinearity='relu')
+        self.fc6 = nn.Linear(512, 512)
+        nn.init.kaiming_uniform_(self.fc6.weight, mode='fan_in', nonlinearity='relu')
+        self.fc_last = nn.Linear(512, LEN_OF_OUTPUT)
         nn.init.kaiming_uniform_(self.fc_last.weight, mode='fan_in', nonlinearity='relu')
-        # self.fc1 = nn.Linear(self._to_linear, 500)
-        # self.fc2 = nn.Linear(500, 1000)
-        # self.fc3 = nn.Linear(1000, 500)
-        # self.fc4 = nn.Linear(500, 500)
-        # self.fc5 = nn.Linear(500, 500)
-        # self.fc6 = nn.Linear(500, 500)
-        # self.fc_last = nn.Linear(500, LEN_OF_OUTPUT)
                 
     def linearize(self, x):
         if self._to_linear == None:
@@ -154,10 +166,10 @@ class Net_fc(nn.Module):
         x = F.relu(self.fc4(x))
         # print("8", x.shape, x[0], x)
         
-        # x = F.relu(self.fc5(x))
+        x = F.relu(self.fc5(x))
         # print("9", x.shape, x[0], x)
         
-        # x = F.relu(self.fc6(x))
+        x = F.relu(self.fc6(x))
         # print("10", x.shape, x[0], x)
         
         x = self.fc_last(x)
@@ -167,11 +179,14 @@ class Net_fc(nn.Module):
 
 loss_function = nn.MSELoss()
 MODEL_NUMBER = 1
-while os.path.isfile(os.path.join('net_{}.pth'.format(MODEL_NUMBER))):
-    net = torch.load(os.path.join('net_{}.pth'.format(MODEL_NUMBER)))
+epoch = 1
+while os.path.isfile(os.path.join('net_{}.pth'.format(TIME__ *100000 + MODEL_NUMBER *1000 + epoch))):
+    print(os.path.join('net_{}.pth'.format(TIME__ *100000 + MODEL_NUMBER *1000 + epoch)))
+    
+    net = torch.load(os.path.join('net_{}.pth'.format(TIME__ *100000 + MODEL_NUMBER *1000 + epoch)))
     net.eval()
     
-    def my_test(size=16, print_now=False):
+    def my_test(size=32, print_now=False):
         # print(my_test_X.shape, my_test_X)
         # print("len(my_test_X)", len(my_test_X))
         # print(size)
@@ -209,7 +224,7 @@ while os.path.isfile(os.path.join('net_{}.pth'.format(MODEL_NUMBER))):
     
     # Vizualizalasa a tanitott halo mukodesenek
     style.use("ggplot")
-    model_name = MODEL_NAME
+    model_name = TRAINING_NAME
     def create_acc_loss_graph(model_name):
         contents = open("efop_log.log", "r").read().split('\n')
         times = []
@@ -223,8 +238,8 @@ while os.path.isfile(os.path.join('net_{}.pth'.format(MODEL_NUMBER))):
             if model_name in c:
                 name, timestamp, acc, loss, val_acc, val_loss = c.split(",")
                 
-                if float(loss) < 5000:
-                    if float(val_loss) < 5000:
+                if float(loss) < 80:
+                    if float(val_loss) < 80:
                         times.append(float(timestamp))
                         accuracies.append(float(acc))
                         losses.append(float(loss))
@@ -234,7 +249,7 @@ while os.path.isfile(os.path.join('net_{}.pth'.format(MODEL_NUMBER))):
                         too_highs += 1
                 else:
                     too_highs += 1
-                
+
         print("too_highs: ", too_highs)
         fig = plt.figure()
         #ax1 = plt.subplot2grid((2, 1), (0, 0))
@@ -244,7 +259,7 @@ while os.path.isfile(os.path.join('net_{}.pth'.format(MODEL_NUMBER))):
         # ax1.plot(times, val_accuracies, label="Val_Accuracies")
         # ax1.legend(loc=2)
         
-        ax2.plot(times, losses, label=LABEL_NAME)
+        ax2.plot(times, losses, label=TIME__ *100000 + MODEL_NUMBER *1000 + epoch)
         ax2.plot(times, val_losses, 'b')
         ax2.legend(loc=1)
         
@@ -255,6 +270,15 @@ while os.path.isfile(os.path.join('net_{}.pth'.format(MODEL_NUMBER))):
     def one_segment_test(start):
         # print(start)
         my_X3, my_y3 = my_test_X[start : start + 1], my_test_y[start : start + 1]
+        to_show_wanted = my_y3.to(device)
+        to_show_guessed = net(my_X3.view(-1, 1, LEN_OF_INPUT).to(device))
+        # print(to_show_wanted.shape)
+        # print(to_show_guessed.shape)
+        # print(" Target:", to_show_wanted, "\n", "Guess:", to_show_guessed)
+        return to_show_wanted, to_show_guessed
+    def one_segment_test_on_train(start):
+        # print(start)
+        my_X3, my_y3 = my_train_X[start : start + 1], my_train_y[start : start + 1]
         to_show_wanted = my_y3.to(device)
         to_show_guessed = net(my_X3.view(-1, 1, LEN_OF_INPUT).to(device))
         # print(to_show_wanted.shape)
@@ -343,37 +367,38 @@ while os.path.isfile(os.path.join('net_{}.pth'.format(MODEL_NUMBER))):
         
         plt.show()
         
-        fig = plt.figure()
-        ax1 = plt.subplot2grid((5, 1), (0, 0))
-        ax2 = plt.subplot2grid((5, 1), (1, 0))
-        ax3 = plt.subplot2grid((5, 1), (2, 0))
-        ax4 = plt.subplot2grid((5, 1), (3, 0))
-        ax5 = plt.subplot2grid((5, 1), (4, 0))
+        # fig = plt.figure()
+        # ax1 = plt.subplot2grid((5, 1), (0, 0))
+        # ax2 = plt.subplot2grid((5, 1), (1, 0))
+        # ax3 = plt.subplot2grid((5, 1), (2, 0))
+        # ax4 = plt.subplot2grid((5, 1), (3, 0))
+        # ax5 = plt.subplot2grid((5, 1), (4, 0))
                                
-        ax1.plot(FL_w_, label="FL wanted")
-        ax1.plot(FL_g_, label="FL guessed")
-        ax1.legend(loc=1)
+        # ax1.plot(FL_w_, label="FL wanted")
+        # ax1.plot(FL_g_, label="FL guessed")
+        # ax1.legend(loc=1)
         
-        ax2.plot(FR_w_, label="FR wanted")
-        ax2.plot(FR_g_, label="FR guessed")
-        ax2.legend(loc=1)
+        # ax2.plot(FR_w_, label="FR wanted")
+        # ax2.plot(FR_g_, label="FR guessed")
+        # ax2.legend(loc=1)
         
-        ax3.plot(RL_w_, label="RL wanted")
-        ax3.plot(RL_g_, label="RL guessed")
-        ax3.legend(loc=1)
+        # ax3.plot(RL_w_, label="RL wanted")
+        # ax3.plot(RL_g_, label="RL guessed")
+        # ax3.legend(loc=1)
         
-        ax4.plot(RR_w_, label="RR wanted")
-        ax4.plot(RR_g_, label="RR guessed")
-        ax4.legend(loc=1)
+        # ax4.plot(RR_w_, label="RR wanted")
+        # ax4.plot(RR_g_, label="RR guessed")
+        # ax4.legend(loc=1)
         
-        ax5.plot(SW_w_, label="SW wanted")
-        ax5.plot(SW_g_, label="SW guessed")
-        ax5.legend(loc=1)
+        # ax5.plot(SW_w_, label="SW wanted")
+        # ax5.plot(SW_g_, label="SW guessed")
+        # ax5.legend(loc=1)
         
-        plt.show()
+        # plt.show()
         
-    to_show_wanted_glob, to_show_guessed_glob = one_segment_test(0)#(np.random.randint(len(my_test_X) - 1))
-    lets_see(to_show_wanted_glob, to_show_guessed_glob)
+    for i in range(8):
+        to_show_wanted_glob, to_show_guessed_glob = one_segment_test(i)#(np.random.randint(len(my_test_X) - 1))
+        lets_see(to_show_wanted_glob, to_show_guessed_glob)
     
     to_show_wanted_glob_array = to_show_wanted_glob.cpu().detach().numpy()
     to_show_guessed_glob_array = to_show_guessed_glob.cpu().detach().numpy()
@@ -387,7 +412,7 @@ while os.path.isfile(os.path.join('net_{}.pth'.format(MODEL_NUMBER))):
     #print("Counted MSE = ", counted_MSE)
     #print("Counted mean error =", counted_error)
     given_MSE = loss_function(to_show_guessed_glob, to_show_wanted_glob)
-    print("Given MSE = ", given_MSE)
+    print("MSE = ", given_MSE)
     
     def plot_losses_after_training():
         # losses_pct = []
@@ -403,7 +428,7 @@ while os.path.isfile(os.path.join('net_{}.pth'.format(MODEL_NUMBER))):
         # print(len(my_test_X))
         # print(range(len(my_test_X)))
         for seg in my_tqdm.tqdm(range(0, len(my_test_X), 1)):
-            # print(seg)
+            #print(seg)
             wanted, guessed = one_segment_test(seg)
             # diff_pct = 0
             diff_val_SW = 0
@@ -502,5 +527,4 @@ while os.path.isfile(os.path.join('net_{}.pth'.format(MODEL_NUMBER))):
         
         
     plot_losses_after_training()
-    MODEL_NUMBER += 1
-print("stabil")
+    epoch += 1
