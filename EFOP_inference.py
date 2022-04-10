@@ -17,7 +17,8 @@ import torch.nn.functional as F
 import time
 
 NET_TYPE =   "fully connected"   # "convolutional" or "fully connected"
-TIME__ = 1647473594
+TIME__ = 1647769026
+epoch = 300
 TRAINING_NAME = "efop__" + str(TIME__)
 LABEL_NAME = f"fc__{int(time.time())}"
 print("")
@@ -25,7 +26,6 @@ print(TRAINING_NAME)
 device = torch.device("cpu")
 
 # adat elokeszites
-REBUILD_DATA = False
 LEN_OF_SEGMENTS = 400
 LEN_OF_INPUT = 4 * LEN_OF_SEGMENTS
 LEN_OF_OUTPUT = 5 * LEN_OF_SEGMENTS
@@ -43,6 +43,8 @@ my_train_X_l = my_X
 my_train_y_l = my_y
 
 my_test_X, my_test_y, my_train_X, my_train_y = my_test_X_l, my_test_y_l, my_train_X_l, my_train_y_l
+
+matrix = [None] * len(my_test_X)
 
 # GPU
 def on_gpu():
@@ -127,19 +129,27 @@ class Net_fc(nn.Module):
         self._to_linear = None
         self.linearize(x)
         
-        self.fc1 = nn.Linear(self._to_linear, 512)
+        self.fc1 = nn.Linear(self._to_linear, 2048)
         nn.init.kaiming_uniform_(self.fc1.weight, mode='fan_in', nonlinearity='relu')
-        self.fc2 = nn.Linear(512, 1024)
+        self.fc2 = nn.Linear(2048, 2048)
         nn.init.kaiming_uniform_(self.fc2.weight, mode='fan_in', nonlinearity='relu')
-        self.fc3 = nn.Linear(1024, 1024)
+        self.fc3 = nn.Linear(2048, 2048)
         nn.init.kaiming_uniform_(self.fc3.weight, mode='fan_in', nonlinearity='relu')
-        self.fc4 = nn.Linear(1024, 512)
+        self.fc4 = nn.Linear(2048, 2048)
         nn.init.kaiming_uniform_(self.fc4.weight, mode='fan_in', nonlinearity='relu')
-        self.fc5 = nn.Linear(512, 512)
+        self.fc5 = nn.Linear(2048, 2048)
         nn.init.kaiming_uniform_(self.fc5.weight, mode='fan_in', nonlinearity='relu')
-        self.fc6 = nn.Linear(512, 512)
+        self.fc6 = nn.Linear(2048, 2048)
         nn.init.kaiming_uniform_(self.fc6.weight, mode='fan_in', nonlinearity='relu')
-        self.fc_last = nn.Linear(512, LEN_OF_OUTPUT)
+        # self.fc7 = nn.Linear(2048, 2048)
+        # nn.init.kaiming_uniform_(self.fc7.weight, mode='fan_in', nonlinearity='relu')
+        # self.fc8 = nn.Linear(2048, 2048)
+        # nn.init.kaiming_uniform_(self.fc8.weight, mode='fan_in', nonlinearity='relu')
+        # self.fc9 = nn.Linear(2048, 2048)
+        # nn.init.kaiming_uniform_(self.fc9.weight, mode='fan_in', nonlinearity='relu')
+        # self.fc10 = nn.Linear(2048, 2048)
+        # nn.init.kaiming_uniform_(self.fc10.weight, mode='fan_in', nonlinearity='relu')
+        self.fc_last = nn.Linear(2048, LEN_OF_OUTPUT)
         nn.init.kaiming_uniform_(self.fc_last.weight, mode='fan_in', nonlinearity='relu')
                 
     def linearize(self, x):
@@ -167,26 +177,46 @@ class Net_fc(nn.Module):
         # print("8", x.shape, x[0], x)
         
         x = F.relu(self.fc5(x))
-        # print("9", x.shape, x[0], x)
+        #print("9", x.shape, x[0], x)
         
         x = F.relu(self.fc6(x))
-        # print("10", x.shape, x[0], x)
+        #print("10", x.shape, x[0], x)
+        
+        # x = F.relu(self.fc7(x))
+        # #print("11", x.shape, x[0], x)
+        
+        # x = F.relu(self.fc8(x))
+        # #print("12", x.shape, x[0], x)
+        
+        # x = F.relu(self.fc9(x))
+        # #print("13", x.shape, x[0], x)
+        
+        # x = F.relu(self.fc10(x))
+        # #print("14", x.shape, x[0], x)
         
         x = self.fc_last(x)
         # print("last", x.shape, x[0], x)
         
         return x
 
+def load_net(path_param):
+    if os.path.isfile(path_param):
+        print("helyes filenev:", path_param)
+        
+        net = torch.load(os.path.join(path_param))
+        print(net)
+        net.eval()
+
 loss_function = nn.MSELoss()
 MODEL_NUMBER = 1
-epoch = 1
+print('net_{}.pth'.format(TIME__ *100000 + MODEL_NUMBER *1000 + epoch))
 while os.path.isfile(os.path.join('net_{}.pth'.format(TIME__ *100000 + MODEL_NUMBER *1000 + epoch))):
     print(os.path.join('net_{}.pth'.format(TIME__ *100000 + MODEL_NUMBER *1000 + epoch)))
     
     net = torch.load(os.path.join('net_{}.pth'.format(TIME__ *100000 + MODEL_NUMBER *1000 + epoch)))
     net.eval()
     
-    def my_test(size=32, print_now=False):
+    def my_test(size=64, print_now=False):
         # print(my_test_X.shape, my_test_X)
         # print("len(my_test_X)", len(my_test_X))
         # print(size)
@@ -287,56 +317,58 @@ while os.path.isfile(os.path.join('net_{}.pth'.format(TIME__ *100000 + MODEL_NUM
         return to_show_wanted, to_show_guessed
     
     def lets_see(to_show_wanted_, to_show_guessed_):
-        FL_w = []
-        FR_w = []
-        RL_w = []
-        RR_w = []
-        SW_w = []
+        FL_w = [None] * LEN_OF_SEGMENTS
+        FR_w = [None] * LEN_OF_SEGMENTS
+        RL_w = [None] * LEN_OF_SEGMENTS
+        RR_w = [None] * LEN_OF_SEGMENTS
+        SW_w = [None] * LEN_OF_SEGMENTS
         
-        FL_g = []
-        FR_g = []
-        RL_g = []
-        RR_g = []
-        SW_g = []
+        FL_g = [None] * LEN_OF_SEGMENTS
+        FR_g = [None] * LEN_OF_SEGMENTS
+        RL_g = [None] * LEN_OF_SEGMENTS
+        RR_g = [None] * LEN_OF_SEGMENTS
+        SW_g = [None] * LEN_OF_SEGMENTS
         
-        FL_w_ = []
-        FR_w_ = []
-        RL_w_ = []
-        RR_w_ = []
-        SW_w_ = []
+        FL_w_ = [None] * LEN_OF_SEGMENTS
+        FR_w_ = [None] * LEN_OF_SEGMENTS
+        RL_w_ = [None] * LEN_OF_SEGMENTS
+        RR_w_ = [None] * LEN_OF_SEGMENTS
+        SW_w_ = [None] * LEN_OF_SEGMENTS
         
-        FL_g_ = []
-        FR_g_ = []
-        RL_g_ = []
-        RR_g_ = []
-        SW_g_ = []
+        FL_g_ = [None] * LEN_OF_SEGMENTS
+        FR_g_ = [None] * LEN_OF_SEGMENTS
+        RL_g_ = [None] * LEN_OF_SEGMENTS
+        RR_g_ = [None] * LEN_OF_SEGMENTS
+        SW_g_ = [None] * LEN_OF_SEGMENTS
             
+        place = 0
         for i in range(LEN_OF_OUTPUT):
             if (i % 5) == 0:
-                FL_w.append(float(to_show_wanted_[0][i]) * 1700)
-                FL_g.append(float(to_show_guessed_[0][i]) * 1700)
-                FL_w_.append(float(to_show_wanted_[0][i]))
-                FL_g_.append(float(to_show_guessed_[0][i]))
+                FL_w[place] = float(to_show_wanted_[0][i]) * 1700
+                FL_g[place] = float(to_show_guessed_[0][i]) * 1700
+                FL_w_[place] = float(to_show_wanted_[0][i])
+                FL_g_[place] = float(to_show_guessed_[0][i])
             if (i % 5) == 1:
-                FR_w.append(float(to_show_wanted_[0][i]) * 1700)
-                FR_g.append(float(to_show_guessed_[0][i]) * 1700)
-                FR_w_.append(float(to_show_wanted_[0][i]))
-                FR_g_.append(float(to_show_guessed_[0][i]))
+                FR_w[place] = float(to_show_wanted_[0][i]) * 1700
+                FR_g[place] = float(to_show_guessed_[0][i]) * 1700
+                FR_w_[place] = float(to_show_wanted_[0][i])
+                FR_g_[place] = float(to_show_guessed_[0][i])
             if (i % 5) == 2:    
-                RL_w.append(float(to_show_wanted_[0][i]) * 1700)
-                RL_g.append(float(to_show_guessed_[0][i]) * 1700)
-                RL_w_.append(float(to_show_wanted_[0][i]))
-                RL_g_.append(float(to_show_guessed_[0][i]))
+                RL_w[place] = float(to_show_wanted_[0][i]) * 1700
+                RL_g[place] = float(to_show_guessed_[0][i]) * 1700
+                RL_w_[place] = float(to_show_wanted_[0][i])
+                RL_g_[place] = float(to_show_guessed_[0][i])
             if (i % 5) == 3:
-                RR_w.append(float(to_show_wanted_[0][i]) * 1700)
-                RR_g.append(float(to_show_guessed_[0][i]) * 1700)
-                RR_w_.append(float(to_show_wanted_[0][i]))
-                RR_g_.append(float(to_show_guessed_[0][i]))
+                RR_w[place] = float(to_show_wanted_[0][i]) * 1700
+                RR_g[place] = float(to_show_guessed_[0][i]) * 1700
+                RR_w_[place] = float(to_show_wanted_[0][i])
+                RR_g_[place] = float(to_show_guessed_[0][i])
             if (i % 5) == 4:
-                SW_w.append(float(to_show_wanted_[0][i]) / 60)
-                SW_g.append(float(to_show_guessed_[0][i]) / 60)
-                SW_w_.append(float(to_show_wanted_[0][i]))
-                SW_g_.append(float(to_show_guessed_[0][i]))
+                SW_w[place] = float(to_show_wanted_[0][i]) / 60
+                SW_g[place] = float(to_show_guessed_[0][i]) / 60
+                SW_w_[place] = float(to_show_wanted_[0][i])
+                SW_g_[place] = float(to_show_guessed_[0][i])
+                place += 1
                 
         fig = plt.figure()
         ax1 = plt.subplot2grid((5, 1), (0, 0))
@@ -367,52 +399,52 @@ while os.path.isfile(os.path.join('net_{}.pth'.format(TIME__ *100000 + MODEL_NUM
         
         plt.show()
         
-        # fig = plt.figure()
-        # ax1 = plt.subplot2grid((5, 1), (0, 0))
-        # ax2 = plt.subplot2grid((5, 1), (1, 0))
-        # ax3 = plt.subplot2grid((5, 1), (2, 0))
-        # ax4 = plt.subplot2grid((5, 1), (3, 0))
-        # ax5 = plt.subplot2grid((5, 1), (4, 0))
+        fig = plt.figure()
+        ax1 = plt.subplot2grid((5, 1), (0, 0))
+        ax2 = plt.subplot2grid((5, 1), (1, 0))
+        ax3 = plt.subplot2grid((5, 1), (2, 0))
+        ax4 = plt.subplot2grid((5, 1), (3, 0))
+        ax5 = plt.subplot2grid((5, 1), (4, 0))
                                
-        # ax1.plot(FL_w_, label="FL wanted")
-        # ax1.plot(FL_g_, label="FL guessed")
-        # ax1.legend(loc=1)
+        ax1.plot(FL_w_, label="FL wanted")
+        ax1.plot(FL_g_, label="FL guessed")
+        ax1.legend(loc=1)
         
-        # ax2.plot(FR_w_, label="FR wanted")
-        # ax2.plot(FR_g_, label="FR guessed")
-        # ax2.legend(loc=1)
+        ax2.plot(FR_w_, label="FR wanted")
+        ax2.plot(FR_g_, label="FR guessed")
+        ax2.legend(loc=1)
         
-        # ax3.plot(RL_w_, label="RL wanted")
-        # ax3.plot(RL_g_, label="RL guessed")
-        # ax3.legend(loc=1)
+        ax3.plot(RL_w_, label="RL wanted")
+        ax3.plot(RL_g_, label="RL guessed")
+        ax3.legend(loc=1)
         
-        # ax4.plot(RR_w_, label="RR wanted")
-        # ax4.plot(RR_g_, label="RR guessed")
-        # ax4.legend(loc=1)
+        ax4.plot(RR_w_, label="RR wanted")
+        ax4.plot(RR_g_, label="RR guessed")
+        ax4.legend(loc=1)
         
-        # ax5.plot(SW_w_, label="SW wanted")
-        # ax5.plot(SW_g_, label="SW guessed")
-        # ax5.legend(loc=1)
+        ax5.plot(SW_w_, label="SW wanted")
+        ax5.plot(SW_g_, label="SW guessed")
+        ax5.legend(loc=1)
         
-        # plt.show()
+        plt.show()
         
-    for i in range(8):
-        to_show_wanted_glob, to_show_guessed_glob = one_segment_test(i)#(np.random.randint(len(my_test_X) - 1))
-        lets_see(to_show_wanted_glob, to_show_guessed_glob)
-    
-    to_show_wanted_glob_array = to_show_wanted_glob.cpu().detach().numpy()
-    to_show_guessed_glob_array = to_show_guessed_glob.cpu().detach().numpy()
-    counted_MSE, counted_error = 0, 0
-    for i in range(0, len(to_show_guessed_glob_array[0])):
-        counted_MSE += math.pow((to_show_wanted_glob_array[0][i] - to_show_guessed_glob_array[0][i]), 2)
-        counted_error += abs(to_show_wanted_glob_array[0][i] - to_show_guessed_glob_array[0][i])
-    counted_MSE = counted_MSE / len(to_show_guessed_glob_array[0])
-    counted_error = counted_error / len(to_show_guessed_glob_array[0])
-    print("")
-    #print("Counted MSE = ", counted_MSE)
-    #print("Counted mean error =", counted_error)
-    given_MSE = loss_function(to_show_guessed_glob, to_show_wanted_glob)
-    print("MSE = ", given_MSE)
+    # for i in range(30):
+    #     to_show_wanted_glob, to_show_guessed_glob = one_segment_test(i)#(np.random.randint(len(my_test_X) - 1))
+    #     lets_see(to_show_wanted_glob, to_show_guessed_glob)
+    #
+    # to_show_wanted_glob_array = to_show_wanted_glob.cpu().detach().numpy()
+    # to_show_guessed_glob_array = to_show_guessed_glob.cpu().detach().numpy()
+    # counted_MSE, counted_error = 0, 0
+    # for i in range(0, len(to_show_guessed_glob_array[0])):
+    #     counted_MSE += math.pow((to_show_wanted_glob_array[0][i] - to_show_guessed_glob_array[0][i]), 2)
+    #     counted_error += abs(to_show_wanted_glob_array[0][i] - to_show_guessed_glob_array[0][i])
+    # counted_MSE = counted_MSE / len(to_show_guessed_glob_array[0])
+    # counted_error = counted_error / len(to_show_guessed_glob_array[0])
+    # print("")
+    # #print("Counted MSE = ", counted_MSE)
+    # #print("Counted mean error =", counted_error)
+    # given_MSE = loss_function(to_show_guessed_glob, to_show_wanted_glob)
+    # print("MSE = ", given_MSE)
     
     def plot_losses_after_training():
         # losses_pct = []
@@ -430,6 +462,8 @@ while os.path.isfile(os.path.join('net_{}.pth'.format(TIME__ *100000 + MODEL_NUM
         for seg in my_tqdm.tqdm(range(0, len(my_test_X), 1)):
             #print(seg)
             wanted, guessed = one_segment_test(seg)
+            matrix[seg] = [wanted, guessed]
+            lets_see(matrix[seg][0], matrix[seg][1])
             # diff_pct = 0
             diff_val_SW = 0
             diff_val_SW_2 = 0
@@ -442,31 +476,31 @@ while os.path.isfile(os.path.join('net_{}.pth'.format(TIME__ *100000 + MODEL_NUM
             for moment in range(LEN_OF_OUTPUT):
                 if (moment % 5) == 4:
                     diff_val_SW += math.pow((float(guessed [0][moment]) / 1) - (float(wanted [0][moment]) / 1), 2)
-                    diff_val_SW_2 += abs((float(guessed [0][moment]) / 60) - (float(wanted [0][moment]) / 60))
+                    diff_val_SW_2 += math.pow((float(guessed [0][moment]) / 1) - (float(wanted [0][moment]) / 1), 2)
                 if (moment % 5) == 0:
                     diff_val_front += math.pow((float(guessed [0][moment]) * 1) - (float(wanted [0][moment])) * 1, 2)
                     if float(wanted [0][moment]) < 0:
-                        diff_val_front_br += abs((float(guessed [0][moment]) * 1700) - (float(wanted [0][moment])) * 1700)
+                        diff_val_front_br += math.pow((float(guessed [0][moment]) * 1) - (float(wanted [0][moment])) * 1, 2)
                     else:
-                        diff_val_front_acc += abs((float(guessed [0][moment]) * 1700) - (float(wanted [0][moment])) * 1700)
+                        diff_val_front_acc += math.pow((float(guessed [0][moment]) * 1) - (float(wanted [0][moment])) * 1, 2)
                 if (moment % 5) == 1:
                     diff_val_front += math.pow((float(guessed [0][moment]) * 1) - (float(wanted [0][moment])) * 1, 2)
                     if float(wanted [0][moment]) < 0:
-                        diff_val_front_br += abs((float(guessed [0][moment]) * 1700) - (float(wanted [0][moment])) * 1700)
+                        diff_val_front_br += math.pow((float(guessed [0][moment]) * 1) - (float(wanted [0][moment])) * 1, 2)
                     else:
-                        diff_val_front_acc += abs((float(guessed [0][moment]) * 1700) - (float(wanted [0][moment])) * 1700)
+                        diff_val_front_acc += math.pow((float(guessed [0][moment]) * 1) - (float(wanted [0][moment])) * 1, 2)
                 if (moment % 5) == 2:
                     diff_val_rear += math.pow((float(guessed [0][moment]) * 1) - (float(wanted [0][moment])) * 1, 2)
                     if float(wanted [0][moment]) < 0:
-                        diff_val_rear_br += abs((float(guessed [0][moment]) * 1700) - (float(wanted [0][moment])) * 1700)
+                        diff_val_rear_br += math.pow((float(guessed [0][moment]) * 1) - (float(wanted [0][moment])) * 1, 2)
                     else:
-                        diff_val_rear_acc += abs((float(guessed [0][moment]) * 1700) - (float(wanted [0][moment])) * 1700)
+                        diff_val_rear_acc += math.pow((float(guessed [0][moment]) * 1) - (float(wanted [0][moment])) * 1, 2)
                 if (moment % 5) == 3:
                     diff_val_rear += math.pow((float(guessed [0][moment]) * 1) - (float(wanted [0][moment])) * 1, 2)
                     if float(wanted [0][moment]) < 0:
-                        diff_val_rear_br += abs((float(guessed [0][moment]) * 1700) - (float(wanted [0][moment])) * 1700)
+                        diff_val_rear_br += math.pow((float(guessed [0][moment]) * 1) - (float(wanted [0][moment])) * 1, 2)
                     else:
-                        diff_val_rear_acc += abs((float(guessed [0][moment]) * 1700) - (float(wanted [0][moment])) * 1700)
+                        diff_val_rear_acc += math.pow((float(guessed [0][moment]) * 1) - (float(wanted [0][moment])) * 1, 2)
                 # diff_pct += abs(100  -  ((float(guessed [0][moment])) / (float(wanted [0][moment])) * 100))
             # losses_pct.append(diff_pct / LEN_OF_OUTPUT)
             losses_val_SW.append(diff_val_SW / LEN_OF_SEGMENTS)
@@ -488,15 +522,15 @@ while os.path.isfile(os.path.join('net_{}.pth'.format(TIME__ *100000 + MODEL_NUM
     
         ax1 = plt.subplot2grid((3, 1), (0, 0))
         # ax1.plot(segments, losses_pct, label="% diff per segments in testdata")
-        ax1.plot(losses_val_SW, 'b', label="val diff per seg in testd SWA")
+        ax1.plot(losses_val_SW, 'b', label="MSE per seg in testd SWA")
         ax1.legend(loc=2)
         
         ax2 = plt.subplot2grid((3, 1), (1, 0))
-        ax2.plot(losses_val_front, 'b', label="val diff per seg in testd WF front wheels")
+        ax2.plot(losses_val_front, 'b', label="MSE per seg in testd WF front wheels")
         ax2.legend(loc=2)
         
         ax3 = plt.subplot2grid((3, 1), (2, 0))
-        ax3.plot(losses_val_rear, 'b', label="val diff per seg in testd WF rear wheels")
+        ax3.plot(losses_val_rear, 'b', label="MSE per seg in testd WF rear wheels")
         ax3.legend(loc=2)
         
         plt.show()
@@ -504,27 +538,27 @@ while os.path.isfile(os.path.join('net_{}.pth'.format(TIME__ *100000 + MODEL_NUM
         fig = plt.figure()
     
         ax1 = plt.subplot2grid((5, 1), (0, 0))
-        ax1.plot(losses_val_front_br, 'b', label="val diff per seg in testd WF front wheels while braking")
+        ax1.plot(losses_val_front_br, 'b', label="MSE per seg in testd WF front wheels while braking")
         ax1.legend(loc=2)
         
         ax2 = plt.subplot2grid((5, 1), (1, 0))
-        ax2.plot(losses_val_front_acc, 'b', label="val diff per seg in testd WF front wheels while accelerating")
+        ax2.plot(losses_val_front_acc, 'b', label="MSE per seg in testd WF front wheels while accelerating")
         ax2.legend(loc=2)
         
         ax3 = plt.subplot2grid((5, 1), (2, 0))
-        ax3.plot(losses_val_rear_br, 'b', label="val diff per seg in testd WF rear wheels while braking")
+        ax3.plot(losses_val_rear_br, 'b', label="MSE per seg in testd WF rear wheels while braking")
         ax3.legend(loc=2)
         
         ax4 = plt.subplot2grid((5, 1), (3, 0))
-        ax4.plot(losses_val_rear_acc, 'b', label="val diff per seg in testd WF rear wheels while accelerating")
+        ax4.plot(losses_val_rear_acc, 'b', label="MSE per seg in testd WF rear wheels while accelerating")
         ax4.legend(loc=2)
         
         ax5 = plt.subplot2grid((5, 1), (4, 0))
-        ax5.plot(losses_val_SW_2, 'b', label="val diff per seg in testd SW")
+        ax5.plot(losses_val_SW_2, 'b', label="MSE per seg in testd SW")
         ax5.legend(loc=2)
         
         plt.show()
         
         
     plot_losses_after_training()
-    epoch += 1
+    epoch += 1000
