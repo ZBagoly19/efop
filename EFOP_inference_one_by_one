@@ -317,7 +317,7 @@ def lets_see(to_show_wanted_, to_show_guessed_):
             SW_g[place] = float(to_show_guessed_[0][i]) / 60
             SW_w_[place] = float(to_show_wanted_[0][i])
             SW_g_[place] = float(to_show_guessed_[0][i])
-        place += 1
+            place += 1
             
     fig = plt.figure()
     ax1 = plt.subplot2grid((5, 1), (0, 0))
