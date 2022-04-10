@@ -67,8 +67,8 @@ class Data_read():
                 target = my_training_data
                 trg = "train"
                 
-            my_input = []
-            my_output = []
+            my_input = [None] * LEN_OF_INPUT
+            my_output = [None] * LEN_OF_OUTPUT
             
             angle = -1 * Orientation [segment]
             
@@ -77,20 +77,20 @@ class Data_read():
             rand_x = 0
             rand_y = 0
             
-            x_glob_test_tmp.clear()
-            y_glob_test_tmp.clear()
-            x_glob_train_tmp.clear()
-            y_glob_train_tmp.clear()
+            x_glob_test_tmp = [None] * LEN_OF_SEGMENTS
+            y_glob_test_tmp = [None] * LEN_OF_SEGMENTS
+            x_glob_train_tmp = [None] * LEN_OF_SEGMENTS
+            y_glob_train_tmp = [None] * LEN_OF_SEGMENTS
             for i in range(LEN_OF_SEGMENTS):
                # print("i", i)
                 # print("segment + i", segment + i)
                 
                 if trg == "test":
-                    x_glob_test_tmp.append(Pos_X [segment + i])
-                    y_glob_test_tmp.append(Pos_Y [segment + i])
+                    x_glob_test_tmp[i] = Pos_X [segment + i]
+                    y_glob_test_tmp[i] = Pos_Y [segment + i]
                 else:
-                    x_glob_train_tmp.append(Pos_X [segment + i])
-                    y_glob_train_tmp.append(Pos_Y [segment + i])
+                    x_glob_train_tmp[i] = Pos_X [segment + i]
+                    y_glob_train_tmp[i] = Pos_Y [segment + i]
                 
                 # X es Y koordinatak szegmensenkent 0-ba tolasa, iranyba forgatasa
                 # print("angle:", angle)
@@ -102,23 +102,23 @@ class Data_read():
                 # print("X norm rot:", x_norm_rot, "Y norm rot:", y_norm_rot)
                 
                 # normalise between -3 and 3
-                my_input.append((x_norm_rot / 30) + rand_x) #30, 100
-                my_input.append((y_norm_rot / 30) + rand_y)
-                my_input.append(Velocity [segment] / 100) #100, 10
-                my_input.append(Orientation [segment] / 30) #30, 1
-                # my_input.append([(x_norm_rot / 30) + rand_x, (y_norm_rot / 30) + rand_y, 
-                #                   Velocity [segment] / 100, Orientation [segment] / 30])
-                # my_input.append([(x_norm_rot / 1) + rand_x, (y_norm_rot / 1) + rand_y, 
-                #                   Velocity [segment] / 1, Orientation [segment] / 1])
+                my_input[(i * 4) + 0] = (x_norm_rot / 30) + rand_x #30, 100
+                my_input[(i * 4) + 1] = (y_norm_rot / 30) + rand_y
+                my_input[(i * 4) + 2] = Velocity [segment] / 100 #100, 10
+                my_input[(i * 4) + 3] = Orientation [segment] / 30 #30, 1
+                # my_input[i] = [(x_norm_rot / 30) + rand_x, (y_norm_rot / 30) + rand_y, 
+                #                   Velocity [segment] / 100, Orientation [segment] / 30]
+                # my_input[i] = [(x_norm_rot / 1) + rand_x, (y_norm_rot / 1) + rand_y, 
+                #                   Velocity [segment] / 1, Orientation [segment] / 1]
                 
-                my_output.append(Fy_FL [segment + i] / 1700)
-                my_output.append(Fy_FR [segment + i] / 1700)
-                my_output.append(Fy_RL [segment + i] / 1700)
-                my_output.append(Fy_RR [segment + i] / 1700)
-                my_output.append(WheelAngle [segment + i] * 60)
-                # # my_output.append([Fy_FL [segment + i] / 1700, Fy_FR [segment + i] / 1700,
+                my_output[(i * 5) + 0] = Fy_FL [segment + i] / 1700
+                my_output[(i * 5) + 1] = Fy_FR [segment + i] / 1700
+                my_output[(i * 5) + 2] = Fy_RL [segment + i] / 1700
+                my_output[(i * 5) + 3] = Fy_RR [segment + i] / 1700
+                my_output[(i * 5) + 4] = WheelAngle [segment + i] * 60
+                # # my_output[i] = [Fy_FL [segment + i] / 1700, Fy_FR [segment + i] / 1700,
                 #                   Fy_RL [segment + i] / 1700, Fy_RR [segment + i] / 1700, 
-                #                   WheelAngle [segment + i] * 60])
+                #                   WheelAngle [segment + i] * 60]
                 
             
             # if len(my_input) != 400:
@@ -161,16 +161,18 @@ def visualization(only_tests=False, only_one=False, which_one=0):
         for segm in glob_train_segs:
             ax0.plot(segm[0], segm[1])
     
-    x_norm_ = []
-    y_norm_ = []
     if only_tests == False:
         if only_one:
+            x_norm_ = [None] * LEN_OF_SEGMENTS
+            y_norm_ = [None] * LEN_OF_SEGMENTS
             for i in range(my_testing_data[0][0].size):
                 if i % 4 == 0:
-                    x_norm_.append(my_testing_data[which_one][0][i])
+                    x_norm_[i] = my_testing_data[which_one][0][i]
                 if i % 4 == 1:
-                    y_norm_.append(my_testing_data[which_one][0][i])
+                    y_norm_[i] = my_testing_data[which_one][0][i]
         else:
+            x_norm_ = [] 
+            y_norm_ = []
             for seg in my_testing_data:
                 for i in range(my_testing_data[1][0].size):
                     if i % 4 == 0:
