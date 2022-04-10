@@ -8,13 +8,11 @@ Created on Thu Mar 8 13:07:32 2022
 import os
 import math
 import numpy as np
-import tqdm as my_tqdm
 import matplotlib.pyplot as plt
 from matplotlib import style
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-import time
 
 NET_TYPE =   "fully connected"   # "convolutional" or "fully connected"
 device = torch.device("cpu")
@@ -120,19 +118,27 @@ class Net_fc(nn.Module):
         self._to_linear = None
         self.linearize(x)
         
-        self.fc1 = nn.Linear(self._to_linear, 512)
+        self.fc1 = nn.Linear(self._to_linear, 2048)
         nn.init.kaiming_uniform_(self.fc1.weight, mode='fan_in', nonlinearity='relu')
-        self.fc2 = nn.Linear(512, 1024)
+        self.fc2 = nn.Linear(2048, 2048)
         nn.init.kaiming_uniform_(self.fc2.weight, mode='fan_in', nonlinearity='relu')
-        self.fc3 = nn.Linear(1024, 1024)
+        self.fc3 = nn.Linear(2048, 2048)
         nn.init.kaiming_uniform_(self.fc3.weight, mode='fan_in', nonlinearity='relu')
-        self.fc4 = nn.Linear(1024, 512)
+        self.fc4 = nn.Linear(2048, 2048)
         nn.init.kaiming_uniform_(self.fc4.weight, mode='fan_in', nonlinearity='relu')
-        self.fc5 = nn.Linear(512, 512)
-        nn.init.kaiming_uniform_(self.fc5.weight, mode='fan_in', nonlinearity='relu')
-        self.fc6 = nn.Linear(512, 512)
-        nn.init.kaiming_uniform_(self.fc6.weight, mode='fan_in', nonlinearity='relu')
-        self.fc_last = nn.Linear(512, LEN_OF_OUTPUT)
+        # self.fc5 = nn.Linear(2048, 2048)
+        # nn.init.kaiming_uniform_(self.fc5.weight, mode='fan_in', nonlinearity='relu')
+        # self.fc6 = nn.Linear(2048, 2048)
+        # nn.init.kaiming_uniform_(self.fc6.weight, mode='fan_in', nonlinearity='relu')
+        # self.fc7 = nn.Linear(2048, 2048)
+        # nn.init.kaiming_uniform_(self.fc7.weight, mode='fan_in', nonlinearity='relu')
+        # self.fc8 = nn.Linear(2048, 2048)
+        # nn.init.kaiming_uniform_(self.fc8.weight, mode='fan_in', nonlinearity='relu')
+        # self.fc9 = nn.Linear(2048, 2048)
+        # nn.init.kaiming_uniform_(self.fc9.weight, mode='fan_in', nonlinearity='relu')
+        # self.fc10 = nn.Linear(2048, 2048)
+        # nn.init.kaiming_uniform_(self.fc10.weight, mode='fan_in', nonlinearity='relu')
+        self.fc_last = nn.Linear(2048, LEN_OF_OUTPUT)
         nn.init.kaiming_uniform_(self.fc_last.weight, mode='fan_in', nonlinearity='relu')
                 
     def linearize(self, x):
@@ -159,11 +165,23 @@ class Net_fc(nn.Module):
         x = F.relu(self.fc4(x))
         # print("8", x.shape, x[0], x)
         
-        x = F.relu(self.fc5(x))
-        # print("9", x.shape, x[0], x)
+        # x = F.relu(self.fc5(x))
+        # #print("9", x.shape, x[0], x)
         
-        x = F.relu(self.fc6(x))
-        # print("10", x.shape, x[0], x)
+        # x = F.relu(self.fc6(x))
+        # #print("10", x.shape, x[0], x)
+        
+        # x = F.relu(self.fc7(x))
+        # #print("11", x.shape, x[0], x)
+        
+        # x = F.relu(self.fc8(x))
+        # #print("12", x.shape, x[0], x)
+        
+        # x = F.relu(self.fc9(x))
+        # #print("13", x.shape, x[0], x)
+        
+        # x = F.relu(self.fc10(x))
+        # #print("14", x.shape, x[0], x)
         
         x = self.fc_last(x)
         # print("last", x.shape, x[0], x)
@@ -172,7 +190,7 @@ class Net_fc(nn.Module):
 
 loss_function = nn.MSELoss()
 
-path = 'net_164751322101013.pth'
+path = 'net_164725911301020.pth'
 if os.path.isfile(path):
     print("helyes filenev:", path)
     
@@ -180,7 +198,7 @@ if os.path.isfile(path):
     print(net)
     net.eval()
 def load_net(path_param):
-    if os.path.isfile(path):
+    if os.path.isfile(path_param):
         print("helyes filenev:", path_param)
         
         net = torch.load(os.path.join(path_param))
@@ -248,56 +266,58 @@ def one_segment__train(start):
     return to_show_wanted, to_show_guessed
 
 def lets_see(to_show_wanted_, to_show_guessed_):
-    FL_w = []
-    FR_w = []
-    RL_w = []
-    RR_w = []
-    SW_w = []
+    FL_w = [None] * LEN_OF_SEGMENTS
+    FR_w = [None] * LEN_OF_SEGMENTS
+    RL_w = [None] * LEN_OF_SEGMENTS
+    RR_w = [None] * LEN_OF_SEGMENTS
+    SW_w = [None] * LEN_OF_SEGMENTS
     
-    FL_g = []
-    FR_g = []
-    RL_g = []
-    RR_g = []
-    SW_g = []
+    FL_g = [None] * LEN_OF_SEGMENTS
+    FR_g = [None] * LEN_OF_SEGMENTS
+    RL_g = [None] * LEN_OF_SEGMENTS
+    RR_g = [None] * LEN_OF_SEGMENTS
+    SW_g = [None] * LEN_OF_SEGMENTS
     
-    FL_w_ = []
-    FR_w_ = []
-    RL_w_ = []
-    RR_w_ = []
-    SW_w_ = []
+    FL_w_ = [None] * LEN_OF_SEGMENTS
+    FR_w_ = [None] * LEN_OF_SEGMENTS
+    RL_w_ = [None] * LEN_OF_SEGMENTS
+    RR_w_ = [None] * LEN_OF_SEGMENTS
+    SW_w_ = [None] * LEN_OF_SEGMENTS
     
-    FL_g_ = []
-    FR_g_ = []
-    RL_g_ = []
-    RR_g_ = []
-    SW_g_ = []
+    FL_g_ = [None] * LEN_OF_SEGMENTS
+    FR_g_ = [None] * LEN_OF_SEGMENTS
+    RL_g_ = [None] * LEN_OF_SEGMENTS
+    RR_g_ = [None] * LEN_OF_SEGMENTS
+    SW_g_ = [None] * LEN_OF_SEGMENTS
         
+    place = 0
     for i in range(LEN_OF_OUTPUT):
         if (i % 5) == 0:
-            FL_w.append(float(to_show_wanted_[0][i]) * 1700)
-            FL_g.append(float(to_show_guessed_[0][i]) * 1700)
-            FL_w_.append(float(to_show_wanted_[0][i]))
-            FL_g_.append(float(to_show_guessed_[0][i]))
+            FL_w[place] = float(to_show_wanted_[0][i]) * 1700
+            FL_g[place] = float(to_show_guessed_[0][i]) * 1700
+            FL_w_[place] = float(to_show_wanted_[0][i])
+            FL_g_[place] = float(to_show_guessed_[0][i])
         if (i % 5) == 1:
-            FR_w.append(float(to_show_wanted_[0][i]) * 1700)
-            FR_g.append(float(to_show_guessed_[0][i]) * 1700)
-            FR_w_.append(float(to_show_wanted_[0][i]))
-            FR_g_.append(float(to_show_guessed_[0][i]))
+            FR_w[place] = float(to_show_wanted_[0][i]) * 1700
+            FR_g[place] = float(to_show_guessed_[0][i]) * 1700
+            FR_w_[place] = float(to_show_wanted_[0][i])
+            FR_g_[place] = float(to_show_guessed_[0][i])
         if (i % 5) == 2:    
-            RL_w.append(float(to_show_wanted_[0][i]) * 1700)
-            RL_g.append(float(to_show_guessed_[0][i]) * 1700)
-            RL_w_.append(float(to_show_wanted_[0][i]))
-            RL_g_.append(float(to_show_guessed_[0][i]))
+            RL_w[place] = float(to_show_wanted_[0][i]) * 1700
+            RL_g[place] = float(to_show_guessed_[0][i]) * 1700
+            RL_w_[place] = float(to_show_wanted_[0][i])
+            RL_g_[place] = float(to_show_guessed_[0][i])
         if (i % 5) == 3:
-            RR_w.append(float(to_show_wanted_[0][i]) * 1700)
-            RR_g.append(float(to_show_guessed_[0][i]) * 1700)
-            RR_w_.append(float(to_show_wanted_[0][i]))
-            RR_g_.append(float(to_show_guessed_[0][i]))
+            RR_w[place] = float(to_show_wanted_[0][i]) * 1700
+            RR_g[place] = float(to_show_guessed_[0][i]) * 1700
+            RR_w_[place] = float(to_show_wanted_[0][i])
+            RR_g_[place] = float(to_show_guessed_[0][i])
         if (i % 5) == 4:
-            SW_w.append(float(to_show_wanted_[0][i]) / 60)
-            SW_g.append(float(to_show_guessed_[0][i]) / 60)
-            SW_w_.append(float(to_show_wanted_[0][i]))
-            SW_g_.append(float(to_show_guessed_[0][i]))
+            SW_w[place] = float(to_show_wanted_[0][i]) / 60
+            SW_g[place] = float(to_show_guessed_[0][i]) / 60
+            SW_w_[place] = float(to_show_wanted_[0][i])
+            SW_g_[place] = float(to_show_guessed_[0][i])
+        place += 1
             
     fig = plt.figure()
     ax1 = plt.subplot2grid((5, 1), (0, 0))
