@@ -1,8 +1,6 @@
-# -*- coding: utf-8 -*-
 """
-Created on Mon Apr 11 11:53:50 2022
-
 @author: Bagoly Zoltán
+         zoltan.bagoly@gmail.com
 """
 import os
 import numpy as np
@@ -10,36 +8,19 @@ import tqdm as my_tqdm
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+import torch.optim as optim
 import time
-import numpy as gfg
 
-NET_TYPE =   "fully connected"   # "convolutional" or "fully connected"
-TIME__ = 1649549122
-epoch = 399
-TRAINING_NAME = "efop__" + str(TIME__)
-LABEL_NAME = f"fc__{int(time.time())}"
-print("")
+NET_TYPE = "fully connected"     # "convolutional" or "fully connected"
+MODEL_NUMBER = 1
+LAYERS = 12
+TIME = int(time.time())
+print("rétegek:", LAYERS)
+TRAINING_NAME = f"efop__{LAYERS}"
+log_name = TRAINING_NAME
+
 print(TRAINING_NAME)
 device = torch.device("cpu")
-
-# adat elokeszites
-LEN_OF_SEGMENTS = 400
-LEN_OF_INPUT = 4 * LEN_OF_SEGMENTS
-LEN_OF_OUTPUT = 5 * LEN_OF_SEGMENTS
-DATA_STRIDE = 10
-
-shuffled_training_data = np.load("my_training_data_1d_XYVO_better_skale.npy", allow_pickle=True)
-shuffled_testing_data = np.load("my_testing_data_1d_XYVO_better_skale.npy", allow_pickle=True)
-my_X = torch.Tensor([i[0] for i in shuffled_training_data]).view(-1, LEN_OF_INPUT)
-my_X_t = torch.Tensor([i[0] for i in shuffled_testing_data]).view(-1, LEN_OF_INPUT)
-my_y = torch.Tensor([i[1] for i in shuffled_training_data]).view(-1, LEN_OF_OUTPUT)
-my_y_t = torch.Tensor([i[1] for i in shuffled_testing_data]).view(-1, LEN_OF_OUTPUT)
-my_test_X_l = my_X_t
-my_test_y_l = my_y_t
-my_train_X_l = my_X
-my_train_y_l = my_y
-
-my_test_X, my_test_y, my_train_X, my_train_y = my_test_X_l, my_test_y_l, my_train_X_l, my_train_y_l
 
 # GPU
 def on_gpu():
@@ -50,6 +31,27 @@ def on_gpu():
 
 device = on_gpu()
 print(device)
+
+# adat makrok
+LEN_OF_SEGMENTS = 400
+LEN_OF_INPUT = 4 * LEN_OF_SEGMENTS
+LEN_OF_OUTPUT = 5 * LEN_OF_SEGMENTS
+# mat = scipy.io.loadmat("meas01.mat")
+EPOCHS = 400
+
+losses = np.zeros([EPOCHS, 3], dtype=float)
+# 2: wnated, guessed
+
+shuffled_testing_data = np.load("my_testing_data_1d_XYVO_better_skale.npy", allow_pickle=True)
+shuffled_training_data = np.load("my_training_data_1d_XYVO_better_skale.npy", allow_pickle=True)
+# print("shu_td", shuffled_training_data.shape)
+# print("shu_td 0", shuffled_training_data[0].shape)
+# print("shu_td 1", shuffled_training_data[1].shape)
+# print("shu_td 00", shuffled_training_data[0][0].shape)
+# print("shu_td 01", shuffled_training_data[0][1].shape)
+# print("shu_td 10", shuffled_training_data[1][0].shape)
+# print("shu_td 11", shuffled_training_data[1][1].shape)
+
 
 # Net convolutional
 class Net_conv(nn.Module):
@@ -192,7 +194,7 @@ class Net_fc(nn.Module):
         
         x = F.relu(self.fc10(x))
         #print("14", x.shape, x[0], x)
-                
+        
         x = F.relu(self.fc11(x))
         #print("15", x.shape, x[0], x)
         
@@ -204,97 +206,138 @@ class Net_fc(nn.Module):
         
         return x
 
-def load_net(path_param):
-    if os.path.isfile(path_param):
-        print("helyes filenev:", path_param)
-        
-        net = torch.load(os.path.join(path_param))
-        print(net)
-        net.eval()
 
+if NET_TYPE == "convolutional":
+    net = Net_conv()
+    optimizer = optim.Adam(net.parameters(), lr=0.001 #, weight_decay=0.00001)
+                           )
+    scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=70, gamma=0.1)
+if NET_TYPE == "fully connected":
+    net = Net_fc()
+    optimizer = optim.Adam(net.parameters(), lr=0.0002 #, weight_decay=0.00001)
+                           )
+    scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=50, gamma=0.5)
+else:
+    print("Háló betöltés!?")
+    net = torch.load(os.path.join('net_164799577101180.pth'))
+    optimizer = optim.Adam(net.parameters(), lr=0.0002 #, weight_decay=0.00001)
+                           )
+    scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=110, gamma=0.5)
+
+net.to(device)
 loss_function = nn.MSELoss()
-MODEL_NUMBER = 1
-print("próba:", 'net_{}.pth'.format(TIME__ *100000 + MODEL_NUMBER *1000 + epoch))
-# while os.path.isfile(os.path.join('net_{}.pth'.format(TIME__ *100000 + MODEL_NUMBER *1000 + epoch))):
-if os.path.isfile(os.path.join('net_{}.pth'.format(TIME__ *100000 + MODEL_NUMBER *1000 + epoch))):
-    print("betoltott háló", os.path.join('net_{}.pth'.format(TIME__ *100000 + MODEL_NUMBER *1000 + epoch)))
+
+def data_division_and_shaping():
+    #print([i[0] for i in shuffled_training_data])
+    #print(shuffled_training_data[1][1].shape)
+    my_X = torch.Tensor([i[0] for i in shuffled_training_data]).view(-1, LEN_OF_INPUT)
+    my_X_t = torch.Tensor([i[0] for i in shuffled_testing_data]).view(-1, LEN_OF_INPUT)
+    # print("X", my_X.shape)
+    my_y = torch.Tensor([i[1] for i in shuffled_training_data]).view(-1, LEN_OF_OUTPUT)
+    my_y_t = torch.Tensor([i[1] for i in shuffled_testing_data]).view(-1, LEN_OF_OUTPUT)
+    # print("y", my_y.shape)
     
-    net = torch.load(os.path.join('net_{}.pth'.format(TIME__ *100000 + MODEL_NUMBER *1000 + epoch)))
+    # needed if the data is not devided already
+    #VAL_PCT = 0.1
+    #val_size = int(len(my_X) * VAL_PCT)
+    
+    #my_test_X = my_X[-val_size :]
+    #my_test_y = my_y[-val_size :]
+    #my_train_X = my_X[ : -val_size]
+    #my_train_y = my_y[ : -val_size]
+    
+    # needed if data is devided in data preparation (to shuffled_training_data and shuffled_testing_data)
+    my_test_X_l = my_X_t
+    my_test_y_l = my_y_t
+    my_train_X_l = my_X
+    my_train_y_l = my_y
+    
+    print("X test", my_test_X_l.shape)
+    print("Y test", my_test_y_l.shape)
+    print("X train", my_train_X_l.shape)
+    print("Y train", my_train_y_l.shape)
+    
+    return my_test_X_l, my_test_y_l, my_train_X_l, my_train_y_l
+
+my_test_X, my_test_y, my_train_X, my_train_y = data_division_and_shaping()
+
+matrices = np.zeros([EPOCHS, len(my_test_X), 2, int(LEN_OF_OUTPUT / LEN_OF_SEGMENTS), LEN_OF_SEGMENTS], dtype=float)
+
+def my_test(size=len(my_test_X), print_now=False):
+    # print(my_test_X.shape, my_test_X)
+    # print("len(my_test_X)", len(my_test_X))
+    # print(size)
+    # random_start = np.random.randint(len(my_test_X) - size)
+    start = 0
+    
+    my_X2, my_y2 = my_test_X[start : start + size], my_test_y[start : start + size]
     net.eval()
+    with torch.no_grad():
+        val_acc, val_loss = my_fwd_pass(my_X2.view(-1, 1, LEN_OF_INPUT).to(device), my_y2.to(device), train=False)
+    if(print_now):
+        print("Val loss: ", val_loss, "; Val_acc: ", val_acc)
+    net.train()
+    return val_acc, val_loss
+
+def my_fwd_pass(b_x, b_y, train=False):
+    if train == True:
+        net.zero_grad()
+    #print("b_x", b_x.shape)
+    #print("b_y:", b_y.shape)
+    outputs = net(b_x)
+    #print("outputs: ", outputs.shape, outputs)
+    # if train == False:
+        # print("outputs:", outputs, "\nb_y:", b_y)
+    # a matches-t maskepp kene szamolni
+    matches = [abs(torch.argmax(i) - torch.argmax(j)) < 0.1 for i, j in zip(outputs, b_y)]
+    accuracy = matches.count(True) / len(matches)
+    loss = loss_function(outputs, b_y)
     
-    def my_test(size=64, print_now=False):
-        # print(my_test_X.shape, my_test_X)
-        # print("len(my_test_X)", len(my_test_X))
-        # print(size)
-        random_start = np.random.randint(len(my_test_X) - size)
-        
-        my_X2, my_y2 = my_test_X[random_start : random_start + size], my_test_y[random_start : random_start + size]
-        net.eval()
-        with torch.no_grad():
-            val_acc, val_loss = my_fwd_pass(my_X2.view(-1, 1, LEN_OF_INPUT).to(device), my_y2.to(device), train=False)
-        if(print_now):
-            print("Val loss: ", val_loss, "; Val_acc: ", val_acc)
-        net.train()
-        return val_acc, val_loss
-    
-    def my_fwd_pass(b_x, b_y, train=False):
-        if train == True:
-            net.zero_grad()
-        #print("b_x", b_x.shape)
-        #print("b_y:", b_y.shape)
-        outputs = net(b_x)
-        #print("outputs: ", outputs.shape, outputs)
-        # if train == False:
-            # print("outputs:", outputs, "\nb_y:", b_y)
-        # a matches-t maskepp kene szamolni
-        matches = [abs(torch.argmax(i) - torch.argmax(j)) < 0.1 for i, j in zip(outputs, b_y)]
-        accuracy = matches.count(True) / len(matches)
-        loss = loss_function(outputs, b_y)
-    
-        # with open("efop_log_output_of_net.log", "a") as file:
-        #     # for i in range(len(outputs)):
-        #     #     output = outputs[0][i]
-        #     file.write(f"{MODEL_NAME},{round(time.time(),3)},{round(float(outputs),10)}\n")
-        #     file.write(f"{MODEL_NAME},{round(time.time(),3)},{round(float(loss),15)}\n")
-        return accuracy, loss
-    
-    model_name = TRAINING_NAME
-    
-    def one_segment_test(start, print_loss=False):
-        # print(start)
-        my_X3, my_y3 = my_test_X[start : start + 1], my_test_y[start : start + 1]
-        to_show_wanted = my_y3.to(device)
-        to_show_guessed = net(my_X3.view(-1, 1, LEN_OF_INPUT).to(device))
-        # print(to_show_wanted.shape)
-        # print(to_show_guessed.shape)
-        # print(" Target:", to_show_wanted, "\n", "Guess:", to_show_guessed)
-        loss = loss_function(to_show_guessed, to_show_wanted)
-        if print_loss:
-            print(loss)
-        return to_show_wanted, to_show_guessed
-    def one_segment_test_on_train(start):
-        # print(start)
-        my_X3, my_y3 = my_train_X[start : start + 1], my_train_y[start : start + 1]
-        to_show_wanted = my_y3.to(device)
-        to_show_guessed = net(my_X3.view(-1, 1, LEN_OF_INPUT).to(device))
-        # print(to_show_wanted.shape)
-        # print(to_show_guessed.shape)
-        # print(" Target:", to_show_wanted, "\n", "Guess:", to_show_guessed)
-        return to_show_wanted, to_show_guessed
-    
-    def create_matrices():
-        matrix_test = np.empty([1, LEN_OF_OUTPUT * 2], dtype=int)
-        for seg in my_tqdm.tqdm(range(0, len(my_test_X), 1)):
-            wanted, guessed = one_segment_test(seg)
-            a = wanted.cpu()
-            b = guessed.cpu()
-            c = a.detach().numpy()
-            d = b.detach().numpy()
-            matrix_row = np.column_stack([c, d])
-            matrix_test = np.append(matrix_test, matrix_row, axis=0)
-        matrix_test = np.delete(matrix_test, 0, 0)
-    
-        matrix_train = np.empty([1, LEN_OF_OUTPUT * 2], dtype=int)
+    if train:
+        loss.backward()
+        optimizer.step()
+
+    # with open("efop_log_output_of_net.log", "a") as file:
+    #     # for i in range(len(outputs)):
+    #     #     output = outputs[0][i]
+    #     file.write(f"{TRAINING_NAME},{round(time.time(),3)},{round(float(outputs),10)}\n")
+    #     file.write(f"{MODEL_NAME},{round(time.time(),3)},{round(float(loss),15)}\n")
+    return accuracy, loss
+
+def one_segment_test(start, print_loss=False):
+    # print(start)
+    my_X3, my_y3 = my_test_X[start : start + 1], my_test_y[start : start + 1]
+    to_show_wanted = my_y3.to(device)
+    to_show_guessed = net(my_X3.view(-1, 1, LEN_OF_INPUT).to(device))
+    # print(to_show_wanted.shape)
+    # print(to_show_guessed.shape)
+    # print(" Target:", to_show_wanted, "\n", "Guess:", to_show_guessed)
+    loss = loss_function(to_show_guessed, to_show_wanted)
+    if print_loss:
+        print(loss)
+    return to_show_wanted, to_show_guessed
+def one_segment_test_on_train(start):
+    # print(start)
+    my_X3, my_y3 = my_train_X[start : start + 1], my_train_y[start : start + 1]
+    to_show_wanted = my_y3.to(device)
+    to_show_guessed = net(my_X3.view(-1, 1, LEN_OF_INPUT).to(device))
+    # print(to_show_wanted.shape)
+    # print(to_show_guessed.shape)
+    # print(" Target:", to_show_wanted, "\n", "Guess:", to_show_guessed)
+    return to_show_wanted, to_show_guessed
+def create_matrices(train_as_well=False):
+    matrix_test = np.zeros([len(my_train_X), LEN_OF_OUTPUT * 2], dtype=float)
+    for seg in range(0, len(my_test_X), 1):
+        wanted, guessed = one_segment_test(seg)
+        a = wanted.cpu()
+        b = guessed.cpu()
+        c = a.detach().numpy()
+        d = b.detach().numpy()
+        matrix_row = np.column_stack([c, d])
+        matrix_test[seg] = matrix_row
+
+    matrix_train = np.zeros([len(my_train_X), LEN_OF_OUTPUT * 2], dtype=float)
+    if train_as_well:
         for seg in my_tqdm.tqdm(range(0, len(my_train_X), 1)):
             wanted, guessed = one_segment_test_on_train(seg)
             a = wanted.cpu()
@@ -302,12 +345,82 @@ if os.path.isfile(os.path.join('net_{}.pth'.format(TIME__ *100000 + MODEL_NUMBER
             c = a.detach().numpy()
             d = b.detach().numpy()
             matrix_row = np.column_stack([c, d])
-            matrix_train = np.append(matrix_train, matrix_row, axis=0)
-        matrix_train = np.delete(matrix_train, 0, 0)
-        
-        return matrix_test, matrix_train
+            matrix_train[seg] = matrix_row
     
-    matrix_test_g, matrix_train_g =  create_matrices()
-            
-    gfg.savetxt("matrix_test.txt", matrix_test_g)
-    gfg.savetxt("matrix_train.txt", matrix_train_g)
+    return matrix_test, matrix_train
+
+def my_train():
+    BATCH_SIZE = 64
+    # cnt = 2
+    print("Training starts")
+    # with open("efop_log.log", "a") as file:
+    for epoch in range(EPOCHS):
+        print("")
+        print("EPOCH:", epoch)
+        for i in my_tqdm.tqdm(range(0, len(my_train_X), BATCH_SIZE)):
+            my_batch_x = my_train_X[i : i + BATCH_SIZE].view(-1, 1, LEN_OF_INPUT).to(device)
+            my_batch_y = my_train_y[i : i + BATCH_SIZE].to(device)
+            # print("batch_x", my_batch_x.shape, my_batch_x)
+            # print("batch_y", my_batch_y)
+            # print("train_x", my_train_X.shape)
+            # print("train_y", my_train_y.shape)
+            my_fwd_pass(my_batch_x, my_batch_y, train=True)
+        
+        accuracy_, loss_ = my_fwd_pass(my_batch_x, my_batch_y, train=True)
+        val_acc_, val_loss_ = my_test(print_now=True)
+        a = loss_.cpu()
+        b = val_loss_.cpu()
+        c = a.detach().numpy()
+        d = b.detach().numpy()
+        losses_row = np.column_stack([epoch, c, d])
+        losses[epoch] = losses_row
+        # file.write(f"{log_name},{cnt},{round(float(accuracy_),5)},{round(float(loss_),10)},{round(float(val_acc_),5)},{round(float(val_loss_),10)}\n")
+        # cnt += 1
+        # scheduler.step()
+        if epoch % 100 == 99:
+            path = os.path.join('net_{}.pth'.format(LAYERS *100000 + MODEL_NUMBER *1000 + epoch))
+            print(path)
+            torch.save(net, path)
+        matrix_test_, matrix_train_ =  create_matrices()
+        matrix_test_g_formed = np.zeros([len(my_test_X), 2, int(LEN_OF_OUTPUT / LEN_OF_SEGMENTS), LEN_OF_SEGMENTS], dtype=float)
+        for test_case in range(len(my_test_X)):
+            for j in range(LEN_OF_OUTPUT):
+                if j % 5 == 0:
+                    matrix_test_g_formed[test_case][0][0][int(j / 5)] = matrix_test_[test_case][j]
+                if j % 5 == 1:
+                    matrix_test_g_formed[test_case][0][1][int(j / 5)] = matrix_test_[test_case][j]
+                if j % 5 == 2:
+                    matrix_test_g_formed[test_case][0][2][int(j / 5)] = matrix_test_[test_case][j]
+                if j % 5 == 3:
+                    matrix_test_g_formed[test_case][0][3][int(j / 5)] = matrix_test_[test_case][j]
+                if j % 5 == 4:
+                    matrix_test_g_formed[test_case][0][4][int(j / 5)] = matrix_test_[test_case][j]
+            for k in range(LEN_OF_OUTPUT, LEN_OF_OUTPUT * 2):
+                if k % 5 == 0:
+                    matrix_test_g_formed[test_case][1][0][int((k-LEN_OF_OUTPUT) / 5)] = matrix_test_[test_case][k]
+                if k % 5 == 1:
+                    matrix_test_g_formed[test_case][1][1][int((k-LEN_OF_OUTPUT) / 5)] = matrix_test_[test_case][k]
+                if k % 5 == 2:
+                    matrix_test_g_formed[test_case][1][2][int((k-LEN_OF_OUTPUT) / 5)] = matrix_test_[test_case][k]
+                if k % 5 == 3:
+                    matrix_test_g_formed[test_case][1][3][int((k-LEN_OF_OUTPUT) / 5)] = matrix_test_[test_case][k]
+                if k % 5 == 4:
+                    matrix_test_g_formed[test_case][1][4][int((k-LEN_OF_OUTPUT) / 5)] = matrix_test_[test_case][k]
+        matrices[epoch] = matrix_test_g_formed
+        
+
+# Tanitas nelkuli halo valasza
+# with open("efop_log.log", "a") as file:
+#     # file.write(f"{log_name},0,{round(float(3200),5)},3200,{round(float(3200),5)},3200\n")
+#     val_acc, val_loss = my_test()
+#     print("Tanitas nelkuli halo valaszan a kulonbseg:", val_loss)
+#     file.write(f"{log_name},1,{round(float(val_acc),5)},{round(float(val_loss),10)},{round(float(val_acc),5)},{round(float(val_loss),10)}\n")
+
+my_train()
+# losses = np.delete(losses, 0, 0)
+np.save('losses_and_val_losses_of_{}.npy'.format(LAYERS), losses)
+np.save('matrices_of_{}.npy'.format(LAYERS), matrices)
+# loaded_losses = np.load('losses_and_val_losses_of_2.npy'.format(LAYERS))
+# loaded_matrices = np.load('matrices_of_{}.npy'.format(LAYERS))
+print("")
+print("rejtett rétegek száma:", LAYERS)
