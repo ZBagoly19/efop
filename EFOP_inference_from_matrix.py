@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Created on Mon Apr 11 11:38:30 2022
 
@@ -13,43 +12,46 @@ import torch.nn as nn
 LEN_OF_SEGMENTS = 400
 LEN_OF_INPUT = 4 * LEN_OF_SEGMENTS
 LEN_OF_OUTPUT = 5 * LEN_OF_SEGMENTS
+style.use("ggplot")
+loss_function = nn.MSELoss()
 
 # adat elokeszites
-NETS = np.array([2, 4, 6, 8, 10])      # numbers of layers
+NETS = np.array([2, 4])      # numbers of layers
 NUM_OF_TESTS = 68
 EPOCHS = 400
 SCALED = True
 
-loaded_losses = np.zeros([len(NETS), EPOCHS, 3], dtype=float)
-loaded_matrices = np.zeros([len(NETS), EPOCHS, NUM_OF_TESTS, 2, int(LEN_OF_OUTPUT / LEN_OF_SEGMENTS), LEN_OF_SEGMENTS], dtype=float)
-loss_function = nn.MSELoss()
-
-# retrieving data from file
 def load_data():
+    losses = np.zeros([len(NETS), EPOCHS, 3], dtype=float)
+    matrices = np.zeros([len(NETS), EPOCHS, NUM_OF_TESTS, 2, int(LEN_OF_OUTPUT / LEN_OF_SEGMENTS), LEN_OF_SEGMENTS], dtype=float)
     i = 0
     for net in NETS:
-        loaded_losses[i] = np.load('losses_and_val_losses_of_{}.npy'.format(net))
-        loaded_matrices[i] = np.load('matrices_of_{}.npy'.format(net))
+        losses[i] = np.load('losses_and_val_losses_of_{}.npy'.format(net))
+        matrices[i] = np.load('matrices_of_{}.npy'.format(net))
         i += 1
-load_data()
+    return losses, matrices
+loaded_losses, loaded_matrices = load_data()
 
+for i in range(len(NETS)):
+    # plt.xlabel('epoch')
+    # plt.ylabel('loss')
+    plt.plot(loaded_losses[i, :, 1], label=str(str(NETS[i]) + " train"))
+    plt.plot(loaded_losses[i, :, 2], label=str(str(NETS[i]) + " val"))
+    plt.legend(loc=1)
+    
 
-style.use("ggplot")
-
-# model_name = TRAINING_NAME
 def loss_graph():
     i = 0
     for net in NETS:
         plt.title(str(net))
         plt.xlabel('epoch')
         plt.ylabel('loss')
-        plt.plot(loaded_losses[i, :, 1], 'orange', label="loss")
+        plt.plot(loaded_losses[i, :, 1], 'orange', label="train loss")
         plt.plot(loaded_losses[i, :, 2], 'blue', label="val loss")
         plt.legend(loc=1)
         plt.axis([-5, 400, 0, 2])
         plt.show()
         i += 1
-    
 loss_graph()
 
 def one_segment_test(net=4, epoch=399, test_seg=67, print_loss=False):
@@ -133,7 +135,7 @@ def one_segment_test(net=4, epoch=399, test_seg=67, print_loss=False):
     plt.show()
     
     return to_show_wanted, to_show_guessed
-wanted, guessed = one_segment_test()
+#wanted, guessed = one_segment_test()
 
 def plot_losses_separated(net, epoch, lets_plot=True):
     # losses_pct = []
@@ -264,5 +266,4 @@ def plot_losses_separated(net, epoch, lets_plot=True):
     plt.legend(loc=2)
     plt.axis([0, len(loaded_matrices[0][0]), 0, 3])
     plt.show()
-
-plot_losses_separated(0, 399, True)
+#plot_losses_separated(0, 399, True)
