@@ -13,9 +13,9 @@ import matplotlib.pyplot as plt
 # adat elokeszites
 my_training_data = []
 my_testing_data = []
-LEN_OF_SEGMENTS = 400
-LEN_OF_INPUT = 4 * LEN_OF_SEGMENTS
-LEN_OF_OUTPUT = 5 * LEN_OF_SEGMENTS
+LEN_OF_SEGMENTS = 100
+LEN_OF_INPUT = 3 * LEN_OF_SEGMENTS
+LEN_OF_OUTPUT = 2 * LEN_OF_SEGMENTS
 DATA_STRIDE = 10
 TEST_DATA_PART_RECIP = 5
 TESTED_BIT = 2             # kisebb kell legyen a TEST_DATA_PART_RECIP-nel
@@ -36,17 +36,13 @@ class Data_read():
         mat = scipy.io.loadmat(source)
         
         # Kimenetek
-        Fy_FL = mat["WheForceX_FL"]
-        Fy_FR = mat["WheForceX_FR"]
-        Fy_RL = mat["WheForceX_RL"]
-        Fy_RR = mat["WheForceX_RR"]
-        WheelAngle = mat["WheAng"]
+        AngVel = mat["a__AngVel_Z"]
+        Vel = mat["a__Vel"]
         
         # Bemenetek
-        Orientation = mat["Ori_Z"]
-        Pos_X = mat["Pos_X"]
-        Pos_Y = mat["Pos_Y"]
-        Velocity = mat["Vel"]
+        Orientation = mat["a__Ori_Z"]
+        Pos_X = mat["a__Pos_X"]
+        Pos_Y = mat["a__Pos_Y"]
         
         segment = 0
         while segment <= start_of_last:
@@ -102,20 +98,16 @@ class Data_read():
                 # print("X norm rot:", x_norm_rot, "Y norm rot:", y_norm_rot)
                 
                 # normalise between -3 and 3
-                my_input[(i * 4) + 0] = (x_norm_rot / 30) + rand_x #30, 100
-                my_input[(i * 4) + 1] = (y_norm_rot / 30) + rand_y
-                my_input[(i * 4) + 2] = Velocity [segment] / 100 #100, 10
-                my_input[(i * 4) + 3] = Orientation [segment] / 30 #30, 1
+                my_input[(i * int(LEN_OF_INPUT / LEN_OF_SEGMENTS)) + 0] = (x_norm_rot / 30) + rand_x #30, 100
+                my_input[(i * int(LEN_OF_INPUT / LEN_OF_SEGMENTS)) + 1] = (y_norm_rot / 30) + rand_y
+                my_input[(i * int(LEN_OF_INPUT / LEN_OF_SEGMENTS)) + 2] = Orientation [segment + i] / 2 #30, 1
                 # my_input[i] = [(x_norm_rot / 30) + rand_x, (y_norm_rot / 30) + rand_y, 
                 #                   Velocity [segment] / 100, Orientation [segment] / 30]
                 # my_input[i] = [(x_norm_rot / 1) + rand_x, (y_norm_rot / 1) + rand_y, 
                 #                   Velocity [segment] / 1, Orientation [segment] / 1]
                 
-                my_output[(i * 5) + 0] = Fy_FL [segment + i] / 1700
-                my_output[(i * 5) + 1] = Fy_FR [segment + i] / 1700
-                my_output[(i * 5) + 2] = Fy_RL [segment + i] / 1700
-                my_output[(i * 5) + 3] = Fy_RR [segment + i] / 1700
-                my_output[(i * 5) + 4] = WheelAngle [segment + i] * 60
+                my_output[(i * int(LEN_OF_OUTPUT / LEN_OF_SEGMENTS)) + 0] = Vel [segment + i] / 10
+                my_output[(i * int(LEN_OF_OUTPUT / LEN_OF_SEGMENTS)) + 1] = AngVel [segment + i] * 6
                 # # my_output[i] = [Fy_FL [segment + i] / 1700, Fy_FR [segment + i] / 1700,
                 #                   Fy_RL [segment + i] / 1700, Fy_RR [segment + i] / 1700, 
                 #                   WheelAngle [segment + i] * 60]
@@ -140,51 +132,53 @@ class Data_read():
         #print("test data", np.array(my_testing_data).shape)
         #print("train data", np.array(my_training_data).shape)
         np.random.shuffle(my_testing_data)
-        np.save("my_testing_data_1d_XYVO_better_skale.npy", my_testing_data)
+        np.save("my_testing_data_XYO_VAV_better_skale.npy", my_testing_data)
         np.random.shuffle(my_training_data)
-        np.save("my_training_data_1d_XYVO_better_skale.npy", my_training_data)
+        np.save("my_training_data_XYO_VAV_better_skale.npy", my_training_data)
         
 dr = Data_read()
 #dr.read_from_raw_data("meas01.mat", 10118 - LEN_OF_SEGMENTS)
 #dr.read_from_raw_data("meas02.mat", 10305 - LEN_OF_SEGMENTS)
-dr.read_from_raw_data("data_zoli_carmaker_leaf_02.mat", 137238 - LEN_OF_SEGMENTS)
+#dr.read_from_raw_data("data_zoli_carmaker_leaf_02.mat", 137238 - LEN_OF_SEGMENTS)
+dr.read_from_raw_data("meas_X_Y_Ori_Vel_AngVel.mat", 13724 - LEN_OF_SEGMENTS)
 
 
 # Vizualizacio
-print("done, visualizing")
-def visualization(only_tests=False, only_one=False, which_one=0):
-    fig = plt.figure()
-    ax0 = plt.subplot2grid((1, 1), (0, 0))
-    for segm in glob_test_segs:
-        ax0.plot(segm[0], segm[1])
-    if only_tests == False:
-        for segm in glob_train_segs:
-            ax0.plot(segm[0], segm[1])
+# print("done, visualizing")
+# def visualization(only_tests=False, only_one=False, which_one=0):
+#     ax0 = plt.subplot2grid((1, 1), (0, 0))
+#     for segm in glob_test_segs:
+#         ax0.plot(segm[0], segm[1])
+#     if only_tests == False:
+#         for segm in glob_train_segs:
+#             ax0.plot(segm[0], segm[1])
+#     plt.show()
     
-    if only_tests == False:
-        if only_one:
-            x_norm_ = [None] * LEN_OF_SEGMENTS
-            y_norm_ = [None] * LEN_OF_SEGMENTS
-            for i in range(my_testing_data[0][0].size):
-                if i % 4 == 0:
-                    x_norm_[i] = my_testing_data[which_one][0][i]
-                if i % 4 == 1:
-                    y_norm_[i] = my_testing_data[which_one][0][i]
-        else:
-            x_norm_ = [] 
-            y_norm_ = []
-            for seg in my_testing_data:
-                for i in range(my_testing_data[1][0].size):
-                    if i % 4 == 0:
-                        x_norm_.append(seg[0][i])
-                    if i % 4 == 1:
-                        y_norm_.append(seg[0][i])
-    
-        fig = plt.figure()
-        ax1 = plt.subplot2grid((1, 1), (0, 0))
-        ax1.plot(x_norm_, y_norm_)
-        plt.show()
-    
-visualization()
-visualization(only_one=True)
-visualization(only_tests=True)
+#     if only_tests == False:
+#         if only_one:
+#             x_norm_ = []
+#             y_norm_ = []
+#             for i in range(my_testing_data[0][0].size):
+#                 if i % int(LEN_OF_INPUT / LEN_OF_SEGMENTS) == 0:
+#                     x_norm_.append(my_testing_data[which_one][0][i])
+#                 if i % int(LEN_OF_INPUT / LEN_OF_SEGMENTS) == 1:
+#                     y_norm_.append(my_testing_data[which_one][0][i])
+#             plt.plot(x_norm_, y_norm_)
+#             plt.axis([-0, 10, -5, 5])
+#             plt.show()
+#         else:
+#             for seg in my_testing_data:
+#                 x_norm_ = [] 
+#                 y_norm_ = []
+#                 for i in range(my_testing_data[1][0].size):
+#                     if i % int(LEN_OF_INPUT / LEN_OF_SEGMENTS) == 0:
+#                         x_norm_.append(seg[0][i])
+#                     if i % int(LEN_OF_INPUT / LEN_OF_SEGMENTS) == 1:
+#                         y_norm_.append(seg[0][i])
+#                 plt.plot(x_norm_, y_norm_)
+#                 plt.axis([-0, 10, -5, 5])
+#                 plt.show()
+#
+# visualization()
+# visualization(only_one=True)
+# visualization(only_tests=True)
