@@ -14,8 +14,10 @@ import matplotlib.pyplot as plt
 my_training_data = []
 my_testing_data = []
 LEN_OF_SEGMENTS = 100
-LEN_OF_INPUT = 3 * LEN_OF_SEGMENTS
-LEN_OF_OUTPUT = 2 * LEN_OF_SEGMENTS
+NUM_OF_INPUT_DATA_TYPES = 3
+NUM_OF_OUTPUT_DATA_TYPES = 2
+LEN_OF_INPUT = NUM_OF_INPUT_DATA_TYPES * LEN_OF_SEGMENTS
+LEN_OF_OUTPUT = NUM_OF_OUTPUT_DATA_TYPES * LEN_OF_SEGMENTS
 DATA_STRIDE = 10
 TEST_DATA_PART_RECIP = 5
 TESTED_BIT = 2             # kisebb kell legyen a TEST_DATA_PART_RECIP-nel
@@ -98,16 +100,16 @@ class Data_read():
                 # print("X norm rot:", x_norm_rot, "Y norm rot:", y_norm_rot)
                 
                 # normalise between -3 and 3
-                my_input[(i * int(LEN_OF_INPUT / LEN_OF_SEGMENTS)) + 0] = (x_norm_rot / 30) + rand_x #30, 100
-                my_input[(i * int(LEN_OF_INPUT / LEN_OF_SEGMENTS)) + 1] = (y_norm_rot / 30) + rand_y
-                my_input[(i * int(LEN_OF_INPUT / LEN_OF_SEGMENTS)) + 2] = Orientation [segment + i] / 2 #30, 1
+                my_input[(i * NUM_OF_INPUT_DATA_TYPES) + 0] = (x_norm_rot / 30) + rand_x #30, 100
+                my_input[(i * NUM_OF_INPUT_DATA_TYPES) + 1] = (y_norm_rot / 30) + rand_y
+                my_input[(i * NUM_OF_INPUT_DATA_TYPES) + 2] = Orientation [segment + i] / 2 #30, 1
                 # my_input[i] = [(x_norm_rot / 30) + rand_x, (y_norm_rot / 30) + rand_y, 
                 #                   Velocity [segment] / 100, Orientation [segment] / 30]
                 # my_input[i] = [(x_norm_rot / 1) + rand_x, (y_norm_rot / 1) + rand_y, 
                 #                   Velocity [segment] / 1, Orientation [segment] / 1]
                 
-                my_output[(i * int(LEN_OF_OUTPUT / LEN_OF_SEGMENTS)) + 0] = Vel [segment + i] / 10
-                my_output[(i * int(LEN_OF_OUTPUT / LEN_OF_SEGMENTS)) + 1] = AngVel [segment + i] * 6
+                my_output[(i * NUM_OF_OUTPUT_DATA_TYPES) + 0] = Vel [segment + i] / 10
+                my_output[(i * NUM_OF_OUTPUT_DATA_TYPES) + 1] = AngVel [segment + i] * 6
                 # # my_output[i] = [Fy_FL [segment + i] / 1700, Fy_FR [segment + i] / 1700,
                 #                   Fy_RL [segment + i] / 1700, Fy_RR [segment + i] / 1700, 
                 #                   WheelAngle [segment + i] * 60]
