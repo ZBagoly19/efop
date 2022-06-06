@@ -1,0 +1,11 @@
+"""
+@author: Bagoly Zoltán
+"""
+
+LEN_OF_SEGMENTS = 10
+NUM_OF_INPUT_DATA_TYPES = 3
+NUM_OF_OUTPUT_DATA_TYPES = 2
+EPOCHS = 600
+EPOCH_SAVE_CONST = 200   # saved net after every 100th epoch
+NUM_OF_TESTS = 27
+INPUT_OUTPUT_COEFFICIENT = 0.8
