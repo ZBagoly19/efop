@@ -15,7 +15,7 @@ my_training_data = []
 my_testing_data = []
 LEN_OF_SEGMENTS = 10
 NUM_OF_INPUT_DATA_TYPES = 3
-NUM_OF_OUTPUT_DATA_TYPES = 2
+NUM_OF_OUTPUT_DATA_TYPES = 1
 LEN_OF_INPUT = NUM_OF_INPUT_DATA_TYPES * LEN_OF_SEGMENTS
 LEN_OF_OUTPUT = NUM_OF_OUTPUT_DATA_TYPES * LEN_OF_SEGMENTS
 DATA_STRIDE = 1
@@ -32,7 +32,7 @@ x_glob_train_tmp = []
 y_glob_train_tmp = []
 x_glob_test_tmp = []
 y_glob_test_tmp = []
-# mat = scipy.io.loadmat("meas01.mat")
+mat = scipy.io.loadmat("meas_cornercut03__X_Y_Ori_Vel_AngVel_WFs_SW_DevAng00051015_DevDist00051015_RouteXYZ_Path_XYZ.mat")
 
 class Data_read():
         
