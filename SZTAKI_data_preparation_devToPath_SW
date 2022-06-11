@@ -1,0 +1,236 @@
+"""
+@author: Bagoly Zoltán
+         zoltan.bagoly@gmail.com
+"""
+#import random
+import scipy.io
+#import math
+import numpy as np
+#import time
+import matplotlib.pyplot as plt
+#from sklearn.preprocessing import MinMaxScaler
+
+
+# adat elokeszites
+my_training_data = []
+my_testing_data = []
+LEN_OF_SEGMENTS = 30
+NUM_OF_INPUT_DATA_TYPES = 2
+NUM_OF_OUTPUT_DATA_TYPES = 1
+LEN_OF_INPUT = NUM_OF_INPUT_DATA_TYPES * LEN_OF_SEGMENTS
+LEN_OF_OUTPUT = NUM_OF_OUTPUT_DATA_TYPES * LEN_OF_SEGMENTS
+DATA_STRIDE = 20    # nem lehet tobb, mint a LEN_OF_SEGMENTS
+NUM_OF_OUT_MOM = 5
+# az adat tizedmásodpercenként van rögzítve, ezzel lehet ugrani benne. 
+# Ha 10, másodpercenként olvasunk belőle
+TEST_DATA_PART_RECIP = 5
+TESTED_BIT = 2             # kisebb kell legyen a TEST_DATA_PART_RECIP-nel
+# time_ = int(time.time())
+# print("time:", time_)
+glob_train_segs = []
+glob_test_segs = []
+x_glob_train_tmp = []
+y_glob_train_tmp = []
+x_glob_test_tmp = []
+y_glob_test_tmp = []
+#mat = scipy.io.loadmat("meas_cornercut03_speedcontrol5__X_Y_Ori_Vel_AngVel_WFs_SW_DevAng00051015_DevDist00051015_TO_PATH_RouteXYZ_Path_XYZ.mat")
+
+class Data_read():
+        
+    def read_from_raw_data(self, source, start_of_last):
+        print("Data preparation")
+        mat = scipy.io.loadmat(source)
+        
+        # Kimenetek
+        SW = mat["SteAng"]
+        
+        # Bemenetek
+        DevDist15 = mat["DevDist15"]
+        DevAng15 = mat["DevAng15"]
+        
+        segment = 200
+        seg_cnt = 0
+        while segment <= start_of_last:
+            seg_cnt += 1
+            
+            target = my_training_data
+            trg = "train"
+            # if we will stay in bounds if we get a test data
+            if segment + (LEN_OF_SEGMENTS - DATA_STRIDE) + LEN_OF_SEGMENTS <= start_of_last:
+                if segment % (LEN_OF_SEGMENTS * TEST_DATA_PART_RECIP) == LEN_OF_SEGMENTS * TESTED_BIT:
+                    target = my_testing_data
+                    trg = "test"
+                    segment += LEN_OF_SEGMENTS - DATA_STRIDE
+                else:
+                    target = my_training_data
+                    trg = "train"
+            else:
+                target = my_training_data
+                trg = "train"
+                
+            # if seg_cnt % 200 == 0:
+            #     print(seg_cnt)
+            #     print(segment)
+            #     print(trg)
+            
+            my_input = [None] * NUM_OF_INPUT_DATA_TYPES
+            my_output = [None] * NUM_OF_OUT_MOM
+            
+            # angle = -1 * Orientation [segment]
+            
+            # rand_x = random.randint(-100, 100)
+            # rand_y = random.randint(-100, 100)
+            # rand_x = 0
+            # rand_y = 0
+            
+            x_glob_test_tmp = [None] * LEN_OF_SEGMENTS
+            y_glob_test_tmp = [None] * LEN_OF_SEGMENTS
+            x_glob_train_tmp = [None] * LEN_OF_SEGMENTS
+            y_glob_train_tmp = [None] * LEN_OF_SEGMENTS
+            
+            my_input[0] = DevDist15 [segment] * 6
+            my_input[1] = DevAng15 [segment]
+            if segment == 0:
+                print(my_input[0], my_input[1])
+            for i in range(NUM_OF_OUT_MOM):
+               # print("i", i)
+                # print("segment + i", segment + i)
+                
+                # if trg == "test":
+                #     x_glob_test_tmp[i] = Pos_X [segment + i]
+                #     y_glob_test_tmp[i] = Pos_Y [segment + i]
+                # else:
+                #     x_glob_train_tmp[i] = Pos_X [segment + i]
+                #     y_glob_train_tmp[i] = Pos_Y [segment + i]
+                
+                my_output[i] = SW [segment + i] / 2                
+            
+            if segment == 0:
+                print(my_output)
+            # if len(my_input) != 400:
+            #     print(len(my_input))
+            # A [:] nelkul csak referencia atadas tortenik, .clear()-kor torli innen is
+            if trg == "test":
+                segment += (LEN_OF_SEGMENTS - DATA_STRIDE)
+                glob_test_segs.append([x_glob_test_tmp[:], y_glob_test_tmp[:]])
+            else:
+                glob_train_segs.append([x_glob_train_tmp[:], y_glob_train_tmp[:]])
+            
+            target.append([np.array(my_input), np.array(my_output)])
+            #print(segment, "my_out", np.array(my_output), np.array(my_output).shape)
+            #print("my_in", np.array(my_output).shape, np.array(my_input))
+            
+            segment += DATA_STRIDE
+        
+        print("done, saving")
+        #print("test data", np.array(my_testing_data).shape)
+        #print("train data", np.array(my_training_data).shape)
+        np.random.shuffle(my_testing_data)
+        np.save("my_testing_data_DevAndDevDist_SW.npy", my_testing_data)
+        np.random.shuffle(my_training_data)
+        np.save("my_training_data_DevAndDevDist_SW.npy", my_training_data)
+        
+dr = Data_read()
+#dr.read_from_raw_data("meas01.mat", 10118 - LEN_OF_SEGMENTS)
+#dr.read_from_raw_data("meas02.mat", 10305 - LEN_OF_SEGMENTS)
+#dr.read_from_raw_data("data_zoli_carmaker_leaf_02.mat", 137238 - LEN_OF_SEGMENTS)
+#dr.read_from_raw_data("meas_X_Y_Ori_Vel_AngVel_mom1sec.mat", 1373 - LEN_OF_SEGMENTS)
+dr.read_from_raw_data("meas_cornercut03_speedcontrol5__X_Y_Ori_Vel_AngVel_WFs_SW_DevAng00051015_DevDist00051015_TO_PATH_RouteXYZ_Path_XYZ.mat", 169210 - LEN_OF_SEGMENTS)
+
+
+# Vizualizacio
+print("done, visualizing")
+def visualization():
+    # plt.figure(1)
+    # for segm in glob_test_segs:
+    #     plt.plot(segm[0], segm[1])
+    # plt.show()
+    
+    # plt.figure(2)
+    # for segm in glob_test_segs:
+    #     plt.plot(segm[0], segm[1])
+    # for segm in glob_train_segs:
+    #     plt.plot(segm[0], segm[1])
+    # plt.show()
+    
+    d_dist = []
+    d_ang = []
+    sw = []
+    which_one = 0
+    for i in range(my_testing_data[0][0].size):
+        if i % int(LEN_OF_INPUT / LEN_OF_SEGMENTS) == 0:
+            d_dist.append(my_testing_data[which_one][0][i])
+        if i % int(LEN_OF_INPUT / LEN_OF_SEGMENTS) == 1:
+            d_ang.append(my_testing_data[which_one][0][i])
+    for i in range(my_testing_data[0][1].size):
+        sw.append(my_testing_data[which_one][1][i])
+    plt.figure(101)
+    plt.title("test " + str(which_one))
+    print("test")
+    plt.plot(d_dist, 'blue', marker='o', label='distance')
+    print("dist:", d_dist[0], "x6=", d_dist[0]*6)
+    plt.plot(d_ang, 'green', marker='o', label='angle')
+    print("ang:", d_ang[0])
+    plt.plot(sw, 'black', label='sw')
+    plt.legend(loc=1)
+    plt.show()
+    
+    d_dist = []
+    d_ang = []
+    sw = []
+    which_one = 0
+    for i in range(my_training_data[0][0].size):
+        if i % int(LEN_OF_INPUT / LEN_OF_SEGMENTS) == 0:
+            d_dist.append(my_training_data[which_one][0][i])
+        if i % int(LEN_OF_INPUT / LEN_OF_SEGMENTS) == 1:
+            d_ang.append(my_training_data[which_one][0][i])
+    for i in range(my_training_data[0][1].size):
+        sw.append(my_training_data[which_one][1][i])
+    plt.figure(102)
+    plt.title("train " + str(which_one))
+    print("train")
+    plt.plot(d_dist, 'blue', marker='o', label='distance')
+    print("dist:", d_dist[0], "x6=", d_dist[0]*6)
+    plt.plot(d_ang, 'green', marker='o', label='angle')
+    print("ang:", d_ang[0])
+    plt.plot(sw, 'black', label='sw')
+    plt.legend(loc=1)
+    plt.show()
+    
+    # fig_idx = 0
+    # for seg in my_testing_data:
+    #     d_dist = []
+    #     d_ang = []
+    #     sw = []
+    #     for i in range(my_testing_data[1][0].size):
+    #         if i % int(LEN_OF_INPUT / LEN_OF_SEGMENTS) == 0:
+    #             d_dist.append(seg[0][i])
+    #         if i % int(LEN_OF_INPUT / LEN_OF_SEGMENTS) == 1:
+    #             d_ang.append(seg[0][i])
+    #     for i in range(my_testing_data[1][0].size):
+    #         sw.append(my_testing_data[which_one][1][i])
+    #     plt.figure(fig_idx)
+    #     plt.plot(d_dist, 'blue')
+    #     plt.plot(d_ang, 'green')
+    #     plt.plot(sw, 'black')
+    #     plt.show()
+    #     fig_idx += 1
+    # plt.figure(fig_idx)
+    # for seg in my_testing_data:
+    #     d_dist = []
+    #     d_ang = []
+    #     sw = []
+    #     for i in range(my_testing_data[1][0].size):
+    #         if i % int(LEN_OF_INPUT / LEN_OF_SEGMENTS) == 0:
+    #             d_dist.append(seg[0][i])
+    #         if i % int(LEN_OF_INPUT / LEN_OF_SEGMENTS) == 1:
+    #             d_ang.append(seg[0][i])
+    #     for i in range(my_testing_data[1][0].size):
+    #         sw.append(my_testing_data[which_one][1][i])
+    #     plt.figure(fig_idx)
+    #     plt.plot(d_dist, 'blue')
+    #     plt.plot(d_ang, 'green')
+    #     plt.plot(sw, 'black')
+    # plt.show()
+
+visualization()
