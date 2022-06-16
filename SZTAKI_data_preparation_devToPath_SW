@@ -14,17 +14,17 @@ import matplotlib.pyplot as plt
 # adat elokeszites
 my_training_data = []
 my_testing_data = []
-LEN_OF_SEGMENTS = 30
+LEN_OF_SEGMENTS = 1
 NUM_OF_INPUT_DATA_TYPES = 2
 NUM_OF_OUTPUT_DATA_TYPES = 1
 LEN_OF_INPUT = NUM_OF_INPUT_DATA_TYPES * LEN_OF_SEGMENTS
 LEN_OF_OUTPUT = NUM_OF_OUTPUT_DATA_TYPES * LEN_OF_SEGMENTS
 DATA_STRIDE = 20    # nem lehet tobb, mint a LEN_OF_SEGMENTS
-NUM_OF_OUT_MOM = 5
+NUM_OF_OUT_MOM = 1
 # az adat tizedmásodpercenként van rögzítve, ezzel lehet ugrani benne. 
 # Ha 10, másodpercenként olvasunk belőle
 TEST_DATA_PART_RECIP = 5
-TESTED_BIT = 2             # kisebb kell legyen a TEST_DATA_PART_RECIP-nel
+TESTED_BIT = 0             # kisebb kell legyen a TEST_DATA_PART_RECIP-nel
 # time_ = int(time.time())
 # print("time:", time_)
 glob_train_segs = []
@@ -33,6 +33,8 @@ x_glob_train_tmp = []
 y_glob_train_tmp = []
 x_glob_test_tmp = []
 y_glob_test_tmp = []
+test_ids = []
+train_ids = []
 #mat = scipy.io.loadmat("meas_cornercut03_speedcontrol5__X_Y_Ori_Vel_AngVel_WFs_SW_DevAng00051015_DevDist00051015_TO_PATH_RouteXYZ_Path_XYZ.mat")
 
 class Data_read():
@@ -56,11 +58,10 @@ class Data_read():
             target = my_training_data
             trg = "train"
             # if we will stay in bounds if we get a test data
-            if segment + (LEN_OF_SEGMENTS - DATA_STRIDE) + LEN_OF_SEGMENTS <= start_of_last:
-                if segment % (LEN_OF_SEGMENTS * TEST_DATA_PART_RECIP) == LEN_OF_SEGMENTS * TESTED_BIT:
+            if segment <= start_of_last:
+                if seg_cnt % TEST_DATA_PART_RECIP == TESTED_BIT:
                     target = my_testing_data
                     trg = "test"
-                    segment += LEN_OF_SEGMENTS - DATA_STRIDE
                 else:
                     target = my_training_data
                     trg = "train"
@@ -68,8 +69,8 @@ class Data_read():
                 target = my_training_data
                 trg = "train"
                 
-            # if seg_cnt % 200 == 0:
-            #     print(seg_cnt)
+            # if seg_cnt % 1 == 0:
+            #     #print(seg_cnt)
             #     print(segment)
             #     print(trg)
             
@@ -90,8 +91,8 @@ class Data_read():
             
             my_input[0] = DevDist15 [segment] * 6
             my_input[1] = DevAng15 [segment]
-            if segment == 0:
-                print(my_input[0], my_input[1])
+            # if segment == 0:
+            #     print(my_input[0], my_input[1])
             for i in range(NUM_OF_OUT_MOM):
                # print("i", i)
                 # print("segment + i", segment + i)
@@ -105,16 +106,17 @@ class Data_read():
                 
                 my_output[i] = SW [segment + i] / 2                
             
-            if segment == 0:
-                print(my_output)
+            # if segment == 0:
+            #     print(my_output)
             # if len(my_input) != 400:
             #     print(len(my_input))
             # A [:] nelkul csak referencia atadas tortenik, .clear()-kor torli innen is
             if trg == "test":
-                segment += (LEN_OF_SEGMENTS - DATA_STRIDE)
                 glob_test_segs.append([x_glob_test_tmp[:], y_glob_test_tmp[:]])
+                test_ids.append(segment)
             else:
                 glob_train_segs.append([x_glob_train_tmp[:], y_glob_train_tmp[:]])
+                train_ids.append(segment)
             
             target.append([np.array(my_input), np.array(my_output)])
             #print(segment, "my_out", np.array(my_output), np.array(my_output).shape)
@@ -122,13 +124,17 @@ class Data_read():
             
             segment += DATA_STRIDE
         
-        print("done, saving")
-        #print("test data", np.array(my_testing_data).shape)
-        #print("train data", np.array(my_training_data).shape)
-        np.random.shuffle(my_testing_data)
-        np.save("my_testing_data_DevAndDevDist_SW.npy", my_testing_data)
-        np.random.shuffle(my_training_data)
-        np.save("my_training_data_DevAndDevDist_SW.npy", my_training_data)
+        if any(x in set(test_ids) for x in train_ids):
+            print("Átfedés a test és train adatok között!!!")
+        else:
+            print("done, saving")
+            #print("test data", np.array(my_testing_data).shape)
+            #print("train data", np.array(my_training_data).shape)
+            np.random.shuffle(my_testing_data)
+            np.save("my_testing_data_DevAndDevDist_SW_1_k" + str(TESTED_BIT) + ".npy", my_testing_data)
+            np.random.shuffle(my_training_data)
+            np.save("my_training_data_DevAndDevDist_SW_1_k" + str(TESTED_BIT) + ".npy", my_training_data)
+
         
 dr = Data_read()
 #dr.read_from_raw_data("meas01.mat", 10118 - LEN_OF_SEGMENTS)
@@ -168,10 +174,11 @@ def visualization():
     plt.title("test " + str(which_one))
     print("test")
     plt.plot(d_dist, 'blue', marker='o', label='distance')
-    print("dist:", d_dist[0], "x6=", d_dist[0]*6)
+    print("dist:", d_dist[0], "/ 6=", d_dist[0]/6)
     plt.plot(d_ang, 'green', marker='o', label='angle')
     print("ang:", d_ang[0])
-    plt.plot(sw, 'black', label='sw')
+    plt.plot(sw, 'black', marker='o', label='sw')
+    print("sw:", sw[0], "x2=", sw[0]*2)
     plt.legend(loc=1)
     plt.show()
     
@@ -190,10 +197,11 @@ def visualization():
     plt.title("train " + str(which_one))
     print("train")
     plt.plot(d_dist, 'blue', marker='o', label='distance')
-    print("dist:", d_dist[0], "x6=", d_dist[0]*6)
+    print("dist:", d_dist[0], "/ 6=", d_dist[0]/6)
     plt.plot(d_ang, 'green', marker='o', label='angle')
     print("ang:", d_ang[0])
-    plt.plot(sw, 'black', label='sw')
+    plt.plot(sw, 'black', marker='o', label='sw')
+    print("sw:", sw[0], "x2=", sw[0]*2)
     plt.legend(loc=1)
     plt.show()
     
@@ -233,4 +241,4 @@ def visualization():
     #     plt.plot(sw, 'black')
     # plt.show()
 
-visualization()
+#visualization()
