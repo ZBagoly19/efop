@@ -16,14 +16,14 @@ loss_function = torch.nn.MSELoss()
 ##############################################################################
 # itt állítjuk be, mi érdekel
     # ezekkel adjuk meg, mely háló fájt töltjük be
-INIT_LRS = [0.0400, 0.0200, 0.0150, 0.0100, 0.0050, 0.0020, 0.0005]
-learn_rate = INIT_LRS[0]
-FILE_PRE = "10_sched_test_Adam_" + str(learn_rate) + "_sched_39_0.7_bn_no_reg_no" + "_"
-FILE_NAME_START = 'XYO_VAV__'
-WIDTH_OF_LAYERS = 24
-NUM_OF_LAYERS = 2
-EPOCH = 599
-create_matrices = True    # ez csak a konkrét szegmensek vizsgálásához kell
+INIT_LRS = [0.01, 0.0005, 0.00005]
+learn_rate = INIT_LRS[1]
+FILE_PRE = "k4_" + str(learn_rate) + "_sched_100_0.9_bn_no_reg_no" + "_"
+FILE_NAME_START = 'DevAngDist_SW___'
+NUM_OF_LAYERS = 1
+WIDTH_OF_LAYERS = 32
+EPOCH = 399
+create_matrices = False    # ez csak a konkrét szegmensek vizsgálásához kell
 
 ##############################################################################
 # ehhez nem kell nyúlni
@@ -54,18 +54,20 @@ loss_function = nn.MSELoss()
 if create_matrices:
     matrix_loaded_losses = np.load(FILE_PRE + FILE_NAME_START + 'losses_and_val_losses_of_{}_{}.npy'.format(WIDTH_OF_LAYERS, NUM_OF_LAYERS))
     
-    LEN_OF_INPUT = consts.NUM_OF_INPUT_DATA_TYPES * consts.LEN_OF_SEGMENTS
-    LEN_OF_OUTPUT = int(consts.NUM_OF_OUTPUT_DATA_TYPES * consts.LEN_OF_SEGMENTS * consts.INPUT_OUTPUT_COEFFICIENT)
+    #LEN_OF_INPUT = consts.NUM_OF_INPUT_DATA_TYPES * consts.LEN_OF_SEGMENTS
+    LEN_OF_INPUT = consts.NUM_OF_INPUT_DATA_TYPES
+    #LEN_OF_OUTPUT = int(consts.NUM_OF_OUTPUT_DATA_TYPES * consts.LEN_OF_SEGMENTS * consts.INPUT_OUTPUT_COEFFICIENT)
+    LEN_OF_OUTPUT = consts.NUM_OF_OUTPUT_DATA_TYPES
     
-    SHUF_TEST_DATA = np.load("my_testing_data_XYO_VAV_better_skale_mom1sec.npy", allow_pickle=True)
-    SHUF_TRAIN_DATA = np.load("my_training_data_XYO_VAV_better_skale_mom1sec.npy", allow_pickle=True)
+    SHUF_TEST_DATA = np.load("my_testing_data_DevAndDevDist_SW_1.npy", allow_pickle=True)
+    SHUF_TRAIN_DATA = np.load("my_training_data_DevAndDevDist_SW_1.npy", allow_pickle=True)
     TRAIN_X = torch.Tensor([i[0] for i in SHUF_TRAIN_DATA]).view(-1, LEN_OF_INPUT)
     TEST_X = torch.Tensor([i[0] for i in SHUF_TEST_DATA]).view(-1, LEN_OF_INPUT)
     TRAIN_Y = torch.Tensor([i[1] for i in SHUF_TRAIN_DATA]).view(-1, LEN_OF_OUTPUT)
     TEST_Y = torch.Tensor([i[1] for i in SHUF_TEST_DATA]).view(-1, LEN_OF_OUTPUT)
     
-    matrix_test_glob = np.zeros([len(TEST_X), 2, consts.NUM_OF_OUTPUT_DATA_TYPES, consts.LEN_OF_SEGMENTS], dtype=float)
-    matrix_train_glob = np.zeros([len(TRAIN_X), 2, consts.NUM_OF_OUTPUT_DATA_TYPES, consts.LEN_OF_SEGMENTS], dtype=float)
+    matrix_test_glob = np.zeros([len(TEST_X), 2, consts.NUM_OF_OUTPUT_DATA_TYPES, consts.NUM_OF_OUTPUT_DATA_TYPES], dtype=float)
+    matrix_train_glob = np.zeros([len(TRAIN_X), 2, consts.NUM_OF_OUTPUT_DATA_TYPES, consts.NUM_OF_OUTPUT_DATA_TYPES], dtype=float)
     
     num_of_layers = NUM_OF_LAYERS
     
@@ -224,21 +226,21 @@ if create_matrices:
                 d = b.detach().numpy()
                 matrix_row = np.column_stack([c, d])
                 matrix_test[seg] = matrix_row
-            matrix_test_l_formed = np.zeros([len(TEST_X), 2, consts.NUM_OF_OUTPUT_DATA_TYPES, int(consts.LEN_OF_SEGMENTS * consts.INPUT_OUTPUT_COEFFICIENT)], dtype=float)
+            matrix_test_l_formed = np.zeros([len(TEST_X), 2, consts.NUM_OF_OUTPUT_DATA_TYPES, consts.NUM_OF_OUTPUT_DATA_TYPES], dtype=float)
             for test_case in range(len(TEST_X)):
                 for j in range(LEN_OF_OUTPUT):
                     if j % consts.NUM_OF_OUTPUT_DATA_TYPES == 0:
                         matrix_test_l_formed[test_case][0][0][int(j / consts.NUM_OF_OUTPUT_DATA_TYPES)] = matrix_test[test_case][j]
-                    if j % consts.NUM_OF_OUTPUT_DATA_TYPES == 1:
-                        matrix_test_l_formed[test_case][0][1][int(j / consts.NUM_OF_OUTPUT_DATA_TYPES)] = matrix_test[test_case][j]
+                    # if j % consts.NUM_OF_OUTPUT_DATA_TYPES == 1:
+                    #     matrix_test_l_formed[test_case][0][1][int(j / consts.NUM_OF_OUTPUT_DATA_TYPES)] = matrix_test[test_case][j]
                 for k in range(LEN_OF_OUTPUT, LEN_OF_OUTPUT * 2):
                     if k % consts.NUM_OF_OUTPUT_DATA_TYPES == 0:
                         matrix_test_l_formed[test_case][1][0][int((k-LEN_OF_OUTPUT) / consts.NUM_OF_OUTPUT_DATA_TYPES)] = matrix_test[test_case][k]
-                    if k % consts.NUM_OF_OUTPUT_DATA_TYPES == 1:
-                        matrix_test_l_formed[test_case][1][1][int((k-LEN_OF_OUTPUT) / consts.NUM_OF_OUTPUT_DATA_TYPES)] = matrix_test[test_case][k]
+                    # if k % consts.NUM_OF_OUTPUT_DATA_TYPES == 1:
+                    #     matrix_test_l_formed[test_case][1][1][int((k-LEN_OF_OUTPUT) / consts.NUM_OF_OUTPUT_DATA_TYPES)] = matrix_test[test_case][k]
         
             matrix_train = np.zeros([len(TRAIN_X), LEN_OF_OUTPUT * 2], dtype=float)  # 2: wan, gue
-            matrix_train_l_formed = np.zeros([len(TRAIN_X), 2, consts.NUM_OF_OUTPUT_DATA_TYPES, int(consts.LEN_OF_SEGMENTS * consts.INPUT_OUTPUT_COEFFICIENT)], dtype=float)
+            matrix_train_l_formed = np.zeros([len(TRAIN_X), 2, consts.NUM_OF_OUTPUT_DATA_TYPES, consts.NUM_OF_OUTPUT_DATA_TYPES], dtype=float)
             for seg in range(len(TRAIN_X)):
                 wanted, guessed = one_segment_test_on_train(seg)
                 a = wanted.cpu()
@@ -251,13 +253,13 @@ if create_matrices:
                 for j in range(LEN_OF_OUTPUT):
                     if j % consts.NUM_OF_OUTPUT_DATA_TYPES == 0:
                         matrix_train_l_formed[train_case][0][0][int(j / consts.NUM_OF_OUTPUT_DATA_TYPES)] = matrix_train[train_case][j]
-                    if j % consts.NUM_OF_OUTPUT_DATA_TYPES == 1:
-                        matrix_train_l_formed[train_case][0][1][int(j / consts.NUM_OF_OUTPUT_DATA_TYPES)] = matrix_train[train_case][j]
+                    # if j % consts.NUM_OF_OUTPUT_DATA_TYPES == 1:
+                    #     matrix_train_l_formed[train_case][0][1][int(j / consts.NUM_OF_OUTPUT_DATA_TYPES)] = matrix_train[train_case][j]
                 for k in range(LEN_OF_OUTPUT, LEN_OF_OUTPUT * 2):
                     if k % consts.NUM_OF_OUTPUT_DATA_TYPES == 0:
                         matrix_train_l_formed[train_case][1][0][int((k-LEN_OF_OUTPUT) / consts.NUM_OF_OUTPUT_DATA_TYPES)] = matrix_train[train_case][k]
-                    if k % consts.NUM_OF_OUTPUT_DATA_TYPES == 1:
-                        matrix_train_l_formed[train_case][1][1][int((k-LEN_OF_OUTPUT) / consts.NUM_OF_OUTPUT_DATA_TYPES)] = matrix_train[train_case][k]
+                    # if k % consts.NUM_OF_OUTPUT_DATA_TYPES == 1:
+                    #     matrix_train_l_formed[train_case][1][1][int((k-LEN_OF_OUTNo documentation availaPUT) / consts.NUM_OF_OUTPUT_DATA_TYPES)] = matrix_train[train_case][k]
             
             return matrix_test_l_formed, matrix_train_l_formed
         matrix_test_glob, matrix_train_glob = create_matrices()
@@ -278,37 +280,37 @@ def segments_test(figure_const, test_segments_l, train_segments_l):
         
         plt.figure(100000+figure_const*10000+test_seg*10)
         ax1 = plt.subplot2grid((2, 1), (0, 0))
-        ax2 = plt.subplot2grid((2, 1), (1, 0))
+        #ax2 = plt.subplot2grid((2, 1), (1, 0))
         
-        ax1.plot(to_show_wanted [0, :] * 10, label="Vel wan")     # *10 : skálázás, tanításkor 10-zel osztjuk
-        ax1.plot(to_show_guessed[0, :] * 10, label="Vel gue")
+        ax1.plot(to_show_wanted [0, :] * 2, marker='o', label="SW wan")     # *2 : skálázás, tanításkor 2-zel osztjuk
+        ax1.plot(to_show_guessed[0, :] * 2, marker='o', label="SW gue")
         ax1.legend(loc=1)
         
-        ax2.plot(to_show_wanted [1, :] / 6, label="AngVel wan")   # /6 : skálázás, tanításkor 6-tal szorozzuk
-        ax2.plot(to_show_guessed[1, :] / 6, label="AngVel gue")
-        ax2.legend(loc=1)
+        # ax2.plot(to_show_wanted [1, :] / 6, label="AngVel wan")   # /6 : skálázás, tanításkor 6-tal szorozzuk
+        # ax2.plot(to_show_guessed[1, :] / 6, label="AngVel gue")
+        # ax2.legend(loc=1)
         
         plt.show()
         
         plt.figure(100000+figure_const*10000+test_seg*10+1)
-        plt.title("Velocity")
+        plt.title("SW")
         plt.xlabel('moment')
         plt.ylabel('raw output')
-        plt.plot(to_show_wanted [0, :], label="wan")
-        plt.plot(to_show_guessed[0, :], label="gue")
+        plt.plot(to_show_wanted [0, :], marker='o', label="wan")
+        plt.plot(to_show_guessed[0, :], marker='o', label="gue")
         plt.legend(loc=1)
-        plt.axis([0, int(consts.LEN_OF_SEGMENTS * consts.INPUT_OUTPUT_COEFFICIENT) - 1, -3.5, 3.5])
+        # plt.axis([0, int(consts.LEN_OF_SEGMENTS * consts.INPUT_OUTPUT_COEFFICIENT) - 1, -3.5, 3.5])
         plt.show()
         
-        plt.figure(100000+figure_const*10000+test_seg*10+2)
-        plt.title("Angular Velocity")
-        plt.xlabel('moment')
-        plt.ylabel('raw output')
-        plt.plot(to_show_wanted [1, :], label="wan")
-        plt.plot(to_show_guessed[1, :], label="gue")
-        plt.legend(loc=1)
-        plt.axis([0, int(consts.LEN_OF_SEGMENTS * consts.INPUT_OUTPUT_COEFFICIENT) - 1, -3.5, 3.5])
-        plt.show()
+        # plt.figure(100000+figure_const*10000+test_seg*10+2)
+        # plt.title("Angular Velocity")
+        # plt.xlabel('moment')
+        # plt.ylabel('raw output')
+        # plt.plot(to_show_wanted [1, :], label="wan")
+        # plt.plot(to_show_guessed[1, :], label="gue")
+        # plt.legend(loc=1)
+        # # plt.axis([0, int(consts.LEN_OF_SEGMENTS * consts.INPUT_OUTPUT_COEFFICIENT) - 1, -3.5, 3.5])
+        # plt.show()
         
         plt.show()
         
@@ -325,43 +327,43 @@ def segments_test(figure_const, test_segments_l, train_segments_l):
         
         plt.figure(200000+figure_const*10000+train_seg*100)
         ax1 = plt.subplot2grid((2, 1), (0, 0))
-        ax2 = plt.subplot2grid((2, 1), (1, 0))
+        #ax2 = plt.subplot2grid((2, 1), (1, 0))
         
-        ax1.plot(to_show_wanted [0, :] * 10, label="Vel wan")     # *10 : skálázás, tanításkor 10-zel osztjuk
-        ax1.plot(to_show_guessed[0, :] * 10, label="Vel gue")
+        ax1.plot(to_show_wanted [0, :] * 2, marker='o', label="SW wan")     # *2 : skálázás, tanításkor 10-zel osztjuk
+        ax1.plot(to_show_guessed[0, :] * 2, marker='o', label="SW gue")
         ax1.legend(loc=1)
         
-        ax2.plot(to_show_wanted [1, :] / 6, label="AngVel wan")   # /6 : skálázás, tanításkor 6-tal szorozzuk
-        ax2.plot(to_show_guessed[1, :] / 6, label="AngVel gue")
-        ax2.legend(loc=1)
+        # ax2.plot(to_show_wanted [1, :] / 6, label="AngVel wan")   # /6 : skálázás, tanításkor 6-tal szorozzuk
+        # ax2.plot(to_show_guessed[1, :] / 6, label="AngVel gue")
+        # ax2.legend(loc=1)
         
         plt.show()
         
         plt.figure(200000+figure_const*10000+train_seg*100+1)
-        plt.title("Velocity")
+        plt.title("SW")
         plt.xlabel('moment')
         plt.ylabel('raw output')
-        plt.plot(to_show_wanted [0, :], label="wan")
-        plt.plot(to_show_guessed[0, :], label="gue")
+        plt.plot(to_show_wanted [0, :], marker='o', label="wan")
+        plt.plot(to_show_guessed[0, :], marker='o', label="gue")
         plt.legend(loc=1)
-        plt.axis([0, int(consts.LEN_OF_SEGMENTS * consts.INPUT_OUTPUT_COEFFICIENT) - 1, -3.5, 3.5])
+        #plt.axis([0, int(consts.LEN_OF_SEGMENTS * consts.INPUT_OUTPUT_COEFFICIENT) - 1, -3.5, 3.5])
         plt.show()
         
-        plt.figure(200000+figure_const*10000+train_seg*100+2)
-        plt.title("Angular Velocity")
-        plt.xlabel('moment')
-        plt.ylabel('raw output')
-        plt.plot(to_show_wanted [1, :], label="wan")
-        plt.plot(to_show_guessed[1, :], label="gue")
-        plt.legend(loc=1)
-        plt.axis([0, int(consts.LEN_OF_SEGMENTS * consts.INPUT_OUTPUT_COEFFICIENT) - 1, -3.5, 3.5])
-        plt.show()
+        # plt.figure(200000+figure_const*10000+train_seg*100+2)
+        # plt.title("Angular Velocity")
+        # plt.xlabel('moment')
+        # plt.ylabel('raw output')
+        # plt.plot(to_show_wanted [1, :], label="wan")
+        # plt.plot(to_show_guessed[1, :], label="gue")
+        # plt.legend(loc=1)
+        # #plt.axis([0, int(consts.LEN_OF_SEGMENTS * consts.INPUT_OUTPUT_COEFFICIENT) - 1, -3.5, 3.5])
+        # plt.show()
         
         plt.show()
 
 def loss_check(figure_const, segments_l, train=False):
-    losses_test_Vel = np.zeros([len(segments_l)], dtype=float)
-    losses_test_AngVel = np.zeros([len(segments_l)], dtype=float)
+    losses_test_SW = np.zeros([len(segments_l)], dtype=float)
+    #losses_test_AngVel = np.zeros([len(segments_l)], dtype=float)
     losses_per_test_segment = np.zeros([len(segments_l)], dtype=float)
     
     idx = 0
@@ -376,16 +378,16 @@ def loss_check(figure_const, segments_l, train=False):
         tensor_w = torch.from_numpy(to_show_wanted)
         tensor_g = torch.from_numpy(to_show_guessed)                
     
-        diff_test_Vel = 0
-        diff_test_AngVel = 0
+        diff_test_SW = 0
+        #diff_test_AngVel = 0
     
-        for moment in range(int(consts.LEN_OF_SEGMENTS * consts.INPUT_OUTPUT_COEFFICIENT)):
-            diff_test_Vel += math.pow((float(to_show_guessed [0, moment])) - (float(to_show_wanted [0, moment])), 2)
-            diff_test_AngVel += math.pow((float(to_show_guessed [1, moment])) - (float(to_show_wanted [1, moment])), 2)
+        #for moment in range(int(consts.LEN_OF_SEGMENTS * consts.INPUT_OUTPUT_COEFFICIENT)):
+        diff_test_SW += math.pow((float(to_show_guessed [0, 0])) - (float(to_show_wanted [0, 0])), 2)
+            #diff_test_AngVel += math.pow((float(to_show_guessed [1, moment])) - (float(to_show_wanted [1, moment])), 2)
         loss = loss_function(tensor_w, tensor_g)
         
-        losses_test_Vel[idx] = diff_test_Vel / consts.LEN_OF_SEGMENTS
-        losses_test_AngVel[idx] = diff_test_AngVel / consts.LEN_OF_SEGMENTS
+        losses_test_SW[idx] = diff_test_SW / consts.LEN_OF_SEGMENTS
+        #losses_test_AngVel[idx] = diff_test_AngVel / consts.LEN_OF_SEGMENTS
         losses_per_test_segment[idx] = loss
         
         idx += 1
@@ -398,23 +400,23 @@ def loss_check(figure_const, segments_l, train=False):
         plt.xlabel('test segment')
     plt.title(str("net layers (width; num): " + str(WIDTH_OF_LAYERS) + "; " + str(NUM_OF_LAYERS) + "; epoch: " + str(EPOCH) + "  MSE per seg in test Vel"))
     plt.ylabel('MSE')
-    plt.plot(segments_l, losses_test_Vel)
+    plt.plot(segments_l, losses_test_SW)
     plt.legend(loc=2)
     plt.axis([segments_l[0], segments_l[-1], 0, 1])
     plt.show()
     
-    if train:
-        plt.figure(figure_const *10000000000 + 2000000000 + WIDTH_OF_LAYERS *1000000 + NUM_OF_LAYERS *1000 + EPOCH +1)    
-        plt.xlabel('train segment')
-    else:
-        plt.figure(figure_const *10000000000 + 1000000000 + WIDTH_OF_LAYERS *1000000 + NUM_OF_LAYERS *1000 + EPOCH +1)    
-        plt.xlabel('test segment')
-    plt.title(str("net layers (width; num): " + str(WIDTH_OF_LAYERS) + "; " + str(NUM_OF_LAYERS) + "; epoch: " + str(EPOCH) + "  MSE per seg in test AngVel"))
-    plt.ylabel('MSE')
-    plt.plot(segments_l, losses_test_AngVel)
-    plt.legend(loc=2)
-    plt.axis([segments_l[0], segments_l[-1], 0, 1])
-    plt.show()
+    # if train:
+    #     plt.figure(figure_const *10000000000 + 2000000000 + WIDTH_OF_LAYERS *1000000 + NUM_OF_LAYERS *1000 + EPOCH +1)    
+    #     plt.xlabel('train segment')
+    # else:
+    #     plt.figure(figure_const *10000000000 + 1000000000 + WIDTH_OF_LAYERS *1000000 + NUM_OF_LAYERS *1000 + EPOCH +1)    
+    #     plt.xlabel('test segment')
+    # plt.title(str("net layers (width; num): " + str(WIDTH_OF_LAYERS) + "; " + str(NUM_OF_LAYERS) + "; epoch: " + str(EPOCH) + "  MSE per seg in test AngVel"))
+    # plt.ylabel('MSE')
+    # #plt.plot(segments_l, losses_test_AngVel)
+    # plt.legend(loc=2)
+    # plt.axis([segments_l[0], segments_l[-1], 0, 1])
+    # plt.show()
     
     if train:
         plt.figure(figure_const *10000000000 + 2000000000 + WIDTH_OF_LAYERS *1000000 + NUM_OF_LAYERS *1000 + EPOCH +2)    
@@ -436,7 +438,7 @@ def loss_check(figure_const, segments_l, train=False):
         print("Loaded loss on all test segments:", matrix_loaded_losses[EPOCH, 2])
 
 def loss(figure_const, widthes_l, numbers_of_layers_l, same=False):
-    col_idx = 0
+    col_idx = 9
     style_idx = 0
     for w in widthes_l:
         for n in numbers_of_layers_l:
@@ -447,10 +449,11 @@ def loss(figure_const, widthes_l, numbers_of_layers_l, same=False):
                 plt.xlabel('epoch')
                 plt.ylabel('loss')
                 print(colours[col_idx])
-                plt.plot(m[ : , 1], colours[col_idx], label=str(str(w) + "; " + str(n) + " train"))
-                col_idx += 1
+                plt.plot(m[ : , 1], colours[col_idx], label=str(str(w) + "; " + str(n) + " train"), linestyle=styles[style_idx])
+                #col_idx += 1
+                style_idx += 1
                 print(colours[col_idx])
-                plt.plot(m[ : , 2], colours[col_idx], label=str(str(w) + "; " + str(n) + " test"))
+                plt.plot(m[ : , 2], colours[col_idx], label=str(str(w) + "; " + str(n) + " test"), linestyle=styles[style_idx])
                 col_idx += 1
                 plt.legend(loc=1)
                 plt.axis([-5, consts.EPOCHS, 0, 1.5])
@@ -534,7 +537,35 @@ def loss_table(figure_const, widthes_l, numbers_of_layers_l):
         
         i += 1
         
+def test_all_outs(figure_const):
+    plt.figure(200 *10 + 5)
+    plt.xlabel('number of layers')
+    plt.ylabel('loss')
+    plt.title("test_all_outs test " + FILE_PRE)
+    plt.plot(matrix_test_glob[:, 0, 0, 0], label='wan')
+    plt.plot(matrix_test_glob[:, 1, 0, 0], label='gue')
+    plt.legend(loc=1)
+    plt.show()
     
+    plt.figure(figure_const *10 + 6)
+    plt.xlabel('out')
+    plt.ylabel('segments')
+    plt.title("test_all_outs train " + FILE_PRE)
+    plt.plot(matrix_train_glob[:, 0, 0, 0], label='wan')
+    plt.plot(matrix_train_glob[:, 1, 0, 0], label='gue')
+    plt.legend(loc=1)
+    plt.show()
+
+# wanteds = []
+# for start in range(len(TRAIN_X)):
+#     my_X3, my_y3 = TRAIN_X[start : start + 1], TRAIN_Y[start : start + 1]
+#     wanteds.append(my_y3)
+# plt.figure(0)
+# plt.plot(wanteds, marker='o', label='wan')
+# plt.legend(loc=1)
+# plt.show()
+
+
 # ehhez nem kell nyúlni
 ##############################################################################
 
@@ -544,13 +575,14 @@ def loss_table(figure_const, widthes_l, numbers_of_layers_l):
     # választott szegmensek
 test_segments = [1, 2] # range(27)           # matrix_test_glob-ból
 train_segments = [1, 2] # range(851)          # matrix_train_glob-ból
-widthes = [24] # np.array([8, 16, 24])
-numbers_of_layers = [2] # np.array([2, 4, 6, 8, 10])
+widthes = [32] # np.array([8, 16, 24])
+numbers_of_layers = [1] # np.array([2, 4, 6, 8, 10])
     # szegmensek pillanatonként
-segments_test(2, test_segments, train_segments)
-    # loss check
-loss_check(1, test_segments, False)
-loss_check(2, train_segments, True)
-loss(7, widthes, numbers_of_layers, False)
+# segments_test(0, test_segments, train_segments)
+    #loss check
+# loss_check(3, test_segments, False)
+# loss_check(4, train_segments, True)
+loss(10, widthes, numbers_of_layers, True)
 #rmse(111, widthes, numbers_of_layers)
 #loss_table(6, widthes, numbers_of_layers)
+#test_all_outs(200)
