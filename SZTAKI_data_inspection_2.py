@@ -477,6 +477,17 @@ def plot_group_v(sensor, d, a, v, fig_num):
         plt.axis([-2, len(angles[d][a][v]) + 1, -0.5, 0.5])
     plt.show()
 
+def std_categories_plot(fig_num):
+    plt.figure(fig_num)
+    plt.xlabel('categories')
+    plt.ylabel('std')
+    plt.plot(table_2d_all_0_cc[:, 6], 'blue')
+    plt.plot(table_2d_all_5_cc[:, 6], 'red')
+    plt.plot(table_2d_all_10_cc[:, 6], 'orange')
+    plt.plot(table_2d_all_15_cc[:, 6], 'green')
+    plt.axis([-2, len(table_2d_all_10_cc[:, 6]) + 1, -0.05, 0.3])
+    plt.show()
+    
 '''
 figure_num = 0
 for s in sensors:
