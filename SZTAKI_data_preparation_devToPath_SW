@@ -15,7 +15,7 @@ import matplotlib.pyplot as plt
 my_training_data = []
 my_testing_data = []
 LEN_OF_SEGMENTS = 1
-NUM_OF_INPUT_DATA_TYPES = 2
+NUM_OF_INPUT_DATA_TYPES = 43
 NUM_OF_OUTPUT_DATA_TYPES = 1
 LEN_OF_INPUT = NUM_OF_INPUT_DATA_TYPES * LEN_OF_SEGMENTS
 LEN_OF_OUTPUT = NUM_OF_OUTPUT_DATA_TYPES * LEN_OF_SEGMENTS
@@ -44,11 +44,18 @@ class Data_read():
         mat = scipy.io.loadmat(source)
         
         # Kimenetek
-        SW = mat["SteAng"]
+        WheAng = mat["WheAng_avg"]
         
         # Bemenetek
-        DevDist15 = mat["DevDist15"]
-        DevAng15 = mat["DevAng15"]
+        Vel = mat["Vel"]
+
+        DevDist000 = mat["DevDist000"]
+        
+        angles = [None] * 41
+        idx = 0
+        for i in range(000, 201, 5):
+            angles[idx] = mat["DevAng{:03d}".format(i)]
+            idx += 1
         
         segment = 200
         seg_cnt = 0
@@ -89,8 +96,11 @@ class Data_read():
             x_glob_train_tmp = [None] * LEN_OF_SEGMENTS
             y_glob_train_tmp = [None] * LEN_OF_SEGMENTS
             
-            my_input[0] = DevDist15 [segment] * 6
-            my_input[1] = DevAng15 [segment]
+            for i in range(41):
+                my_input[i] = angles[i][segment] * 3
+            my_input[41] = DevDist000 [segment] * 5
+            my_input[42] = Vel [segment] - 6
+            
             # if segment == 0:
             #     print(my_input[0], my_input[1])
             for i in range(NUM_OF_OUT_MOM):
@@ -104,7 +114,7 @@ class Data_read():
                 #     x_glob_train_tmp[i] = Pos_X [segment + i]
                 #     y_glob_train_tmp[i] = Pos_Y [segment + i]
                 
-                my_output[i] = SW [segment + i] / 2                
+                my_output[i] = WheAng [segment + i] * 10
             
             # if segment == 0:
             #     print(my_output)
@@ -131,9 +141,9 @@ class Data_read():
             #print("test data", np.array(my_testing_data).shape)
             #print("train data", np.array(my_training_data).shape)
             np.random.shuffle(my_testing_data)
-            np.save("my_testing_data_DevAndDevDist_SW_1_k" + str(TESTED_BIT) + ".npy", my_testing_data)
+            np.save("my_testing_data_DevAngsDevDistVel_WheAng_1_k" + str(TESTED_BIT) + ".npy", my_testing_data)
             np.random.shuffle(my_training_data)
-            np.save("my_training_data_DevAndDevDist_SW_1_k" + str(TESTED_BIT) + ".npy", my_training_data)
+            np.save("my_training_data_DevAngsDevDistVel_WheAng_1_k" + str(TESTED_BIT) + ".npy", my_training_data)
 
         
 dr = Data_read()
