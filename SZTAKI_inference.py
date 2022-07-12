@@ -555,15 +555,35 @@ def test_all_outs(figure_const):
     plt.plot(matrix_train_glob[:, 1, 0, 0], label='gue')
     plt.legend(loc=1)
     plt.show()
-
-# wanteds = []
-# for start in range(len(TRAIN_X)):
-#     my_X3, my_y3 = TRAIN_X[start : start + 1], TRAIN_Y[start : start + 1]
-#     wanteds.append(my_y3)
-# plt.figure(0)
-# plt.plot(wanteds, marker='o', label='wan')
-# plt.legend(loc=1)
-# plt.show()
+    
+def input_inference(figure_const, sensor_in_dm, start_idx):
+    sensor_idx = int(sensor_in_dm / 5)
+    td = np.load("my_testing_data_DevAngsDevDistVel_WheAng_1_k" + str(k) + ".npy", allow_pickle=True)
+    curr = start_idx
+    idx1 = -1
+    idx2 = -1
+    while idx1 == -1:
+        curr += 1
+        for other in range(curr + 200, len(td)):
+            if abs(td[curr][0][41] - td[other][0][41]) < 0.1:
+                if abs(td[curr][0][sensor_idx] - td[other][0][sensor_idx]) < 0.05:
+                    if abs(td[curr][0][42] - td[other][0][42]) < 0.25:
+                        if 0.3 < abs(td[curr][1] - td[other][1]):
+                            if idx1 == -1:
+                                idx1 = curr
+                                idx2 = other
+                                print("RED: dist:", td[curr][0][41], " ang:", td[curr][0][sensor_idx], " vel:", td[curr][0][42], " wheel ang:", td[curr][1])
+                                print("BLUE: dist:", td[other][0][41], " ang:", td[other][0][sensor_idx], " vel:", td[other][0][42], " wheel ang:", td[other][1])
+    
+    plt.figure(figure_const)
+    plt.title(str(idx1) + " " + str(idx2) + "\n" +
+              str(td[idx1][1]) + " " + str(td[idx2][1]))
+    plt.plot(td[idx1][0][0:41], "red", marker='o')
+    plt.plot(td[idx2][0][0:41], "blue", marker='o')
+    plt.plot(sensor_idx, td[idx1][0][sensor_idx], "black", marker='o', label="választott\n sensor")
+    plt.plot(sensor_idx, td[idx2][0][sensor_idx], "black", marker='o')
+    plt.legend(loc=(1.04, 0.5))
+    plt.show()
 
 
 # ehhez nem kell nyúlni
