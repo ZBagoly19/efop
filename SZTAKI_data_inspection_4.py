@@ -458,6 +458,16 @@ def plot_pair(figure_const, sensor):
                     plt.axis('equal')
                     plt.legend(loc=(1.04, 1))
                     plt.show()
+                    plt.figure(figure_const+2)
+                    sens_pos = 0
+                    for sen in sensor_angles:
+                        plt.plot(sens_pos, sen[mom_min], "red", marker='o')
+                        plt.plot(sens_pos, sen[mom_max], "blue", marker='o')
+                        sens_pos += 0.5
+                    plt.plot(sensor, sensor_angles[sensor*2][mom_min], "black", marker='o', label="választott\n sensor")
+                    plt.plot(sensor, sensor_angles[sensor*2][mom_max], "black", marker='o')
+                    plt.legend(loc=(1.04, 0.5))
+                    plt.show()
     for d in range(DEV_DIST_GRID):
         for a in range(DEV_ANG_GRID):
             for v in range(VEL_GRID):
@@ -466,7 +476,7 @@ def plot_pair(figure_const, sensor):
                     if WHE_ANG_RANGE < angles_vel[d][a][v][-1][0] - angles_vel[d][a][v][0][0]:
                         mom_min = angles_vel[d][a][v][0][1]
                         mom_max = angles_vel[d][a][v][-1][1]
-                        plt.figure(figure_const+2)
+                        plt.figure(figure_const+3)
                         plt.xlabel('')
                         plt.ylabel('')
                         plt.title("sensor: " + str(sensor) + "; moment: " + str(mom_min) + "\n" + 
@@ -488,7 +498,7 @@ def plot_pair(figure_const, sensor):
                         plt.axis('equal')
                         plt.legend(loc=(1.04, 1))
                         plt.show()
-                        plt.figure(figure_const+3)
+                        plt.figure(figure_const+4)
                         plt.xlabel('')
                         plt.ylabel('')
                         plt.title("sensor: " + str(sensor) + "; moment: " + str(mom_max) + "\n" + 
@@ -510,11 +520,21 @@ def plot_pair(figure_const, sensor):
                         plt.axis('equal')
                         plt.legend(loc=(1.04, 1))
                         plt.show()
+                        plt.figure(figure_const+5)
+                        sens_pos = 0
+                        for sen in sensor_angles:
+                            plt.plot(sens_pos, sen[mom_min], "red", marker='o')
+                            plt.plot(sens_pos, sen[mom_max], "blue", marker='o')
+                            sens_pos += 0.5
+                        plt.plot(sensor, sensor_angles[sensor*2][mom_min], "black", marker='o', label="választott\n sensor")
+                        plt.plot(sensor, sensor_angles[sensor*2][mom_max], "black", marker='o')
+                        plt.legend(loc=(1.04, 0.5))
+                        plt.show()
 
 fig = 0
 for s in sensors:
     plot_pair(fig, s)
-    fig += 4
+    fig += 6
     
 plt.plot(PathX[1267275 - 1000 : 1267275 - 1000 + 3600], PathY[1267275 - 1000 : 1267275 - 1000 + 3600], "blue", label="path")
 plt.plot(Pos_X[1267275 - 1000], Pos_Y[1267275 - 1000], "blue", marker='o', label="pos")
