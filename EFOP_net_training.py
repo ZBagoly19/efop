@@ -19,11 +19,11 @@ glob_losses = []
 #WIDTH_OF_LAYERS = 32
 #NUMBER_OF_LAYERS = 12
 #BATCH_NORMS = [False, True]
-INIT_LRS = [0.006, 0.001, 0.0006, 0.0001, 0.00006, 0.0000124, 0.000006, 0.000001]
+INIT_LRS = [0.001, 0.0007]
 #WEIGHT_DECAYS = [0.0005, 0.0001, 0.00005, 0.00001, 0.000005, 0.000001, 0.0000005]
 
-NUMBERS_OF_LAYERS = [1]
-WIDTHES_OF_LAYERS = [16, 32, 64]
+NUMBERS_OF_LAYERS = [1, 2, 3, 4, 5]
+WIDTHES_OF_LAYERS = [32, 64]
 
 for learn_rate in INIT_LRS:
     print("new initial learning rate:", learn_rate)
@@ -35,7 +35,7 @@ for learn_rate in INIT_LRS:
         for width in WIDTHES_OF_LAYERS:
             for k in range(5):
                 print("K =", k)
-                FILE_PRE = "k" + str(k) + "_" + str(learn_rate) + "_sched_80_0.8_bn_no_reg_no"
+                FILE_PRE = "multiple_road_sensors_" + str(k) + "_" + str(learn_rate) + "_sched_400_08_bn_no_reg_no"
                 #if bn:
                     #FILE_PRE = "10_Adam_" + str(learn_rate) + "_sched_50_0.8_bn_no" + "_reg_no"
                 # print(num_of_layers, WIDTHES_OF_LAYERS[width_idx])
@@ -68,8 +68,8 @@ for learn_rate in INIT_LRS:
                 device = on_gpu()
                 print(device)
                 
-                shuffled_testing_data = np.load("my_testing_data_DevAndDevDist_SW_1_k" + str(k) + ".npy", allow_pickle=True)
-                shuffled_training_data = np.load("my_training_data_DevAndDevDist_SW_1_k" + str(k) + ".npy", allow_pickle=True)
+                shuffled_testing_data = np.load("my_testing_data_DevAngsDevDistVel_WheAng_1_k" + str(k) + ".npy", allow_pickle=True)
+                shuffled_training_data = np.load("my_training_data_DevAngsDevDistVel_WheAng_1_k" + str(k) + ".npy", allow_pickle=True)
                 # print("shu_td", shuffled_training_data.shape)
                 # print("shu_td 0", shuffled_training_data[0].shape)
                 # print("shu_td 1", shuffled_training_data[1].shape)
@@ -374,7 +374,7 @@ for learn_rate in INIT_LRS:
                     net.to(device)
                     optimizer = optim.Adam(net.parameters(), lr=learn_rate) # , weight_decay=wd)
                                            
-                    scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=80, gamma=0.8)
+                    scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=400, gamma=0.8)
                 # else:
                 #     print("Háló betöltés!?")
                 #     net = torch.load(os.path.join('net_164799577101180.pth'))
@@ -570,7 +570,7 @@ for learn_rate in INIT_LRS:
                         #print(epoch, optimizer)
                         if 250 < epoch:
                             if epoch % consts.EPOCH_SAVE_CONST == consts.EPOCH_SAVE_CONST - 1:
-                                path = os.path.join(FILE_PRE + '_net_DevAngDist_SW___{}_{}_{}.pth'.format(WIDTH_OF_LAYERS, num_of_layers, epoch))
+                                path = os.path.join(FILE_PRE + '_net_DevAngsDistVel_WA___{}_{}_{}.pth'.format(WIDTH_OF_LAYERS, num_of_layers, epoch))
                                 print(path)
                                 torch.save(net, path)
                         #if lets_print:
@@ -612,7 +612,7 @@ for learn_rate in INIT_LRS:
                 #     file.write(f"{log_name},1,{round(float(val_acc),5)},{round(float(val_loss),10)},{round(float(val_acc),5)},{round(float(val_loss),10)}\n")
                 
                 my_train()
-                np.save(FILE_PRE + '_DevAngDist_SW___losses_and_val_losses_of_{}_{}.npy'.format(WIDTH_OF_LAYERS, num_of_layers), losses)
+                np.save(FILE_PRE + '_DevAngsDistVel_WA___losses_and_val_losses_of_{}_{}.npy'.format(WIDTH_OF_LAYERS, num_of_layers), losses)
                 #np.save('XYO_VAV__matrices_of_{}_{}.npy'.format(WIDTH_OF_LAYERS, NUMBER_OF_LAYERS), matrices)
                 print("")
                 print("rejtett rétegek száma:", num_of_layers, "rejtett rétegek szélessége:", WIDTH_OF_LAYERS)
