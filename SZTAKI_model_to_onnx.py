@@ -142,7 +142,9 @@ if os.path.isfile(f):
     print("sikeres betöltés")
     net.eval()
     rand_input = torch.randn(batch_size, 1, 43, requires_grad=True).to(DEVICE)
+    print(rand_input)
     torch_out = net(rand_input)
+    print(torch_out)
 
     # Export the model
     torch.onnx.export(net,          # model being run
