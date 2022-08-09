@@ -5,6 +5,3 @@ params = importONNXFunction(modelfile, 'netFcn')
 % random_input2= [-1.2074, -0.6077,  0.7078,  2.1883, -0.4033, -1.2030,  1.4918, -0.7733,  0.1916, -1.1316,  0.2936, -0.0506, -1.0402,  0.8863, -0.3443,  0.4622,  1.0497,  0.3033, -1.1258, -1.0783,  0.7738, 0.7509,  0.5468,  0.8767,  0.8592,  1.3396, -1.6541,  0.2497, 0.1170,  0.8926,  0.3966,  0.2971,  0.8474, -0.3517,  0.8902, -0.9450,  0.3664, -0.1828,  1.4702,  0.5326, -0.1967, -1.0117, -0.9585];
 % result = netFcn(random_input, params)
 % result2 = netFcn(random_input2, params)
-
-options = simset('SrcWorkspace','current');
-sim('load_and_use_onnx_test',[],options)
