@@ -1,0 +1,1 @@
+bbb(current_input);
