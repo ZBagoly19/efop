@@ -339,5 +339,5 @@ for learn_rate in INIT_LRS:
                         np.save('Mate_losses__width_{}_depth_{}.npy'.format(width, num_of_layers), losses)
                         print("")
                         print("rejtett rétegek száma:", num_of_layers, "rejtett rétegek szélessége:", width)
-                        glob_losses.append([learn_rate, False, 0, width, num_of_layers, sum(losses[-10 : , 2])/10])
+                        glob_losses.append([learn_rate, False, 0, width, num_of_layers, sum(losses[-10 : , 1])/10, sum(losses[-10 : , 2])/10])
                         print("")
