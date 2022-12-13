@@ -36,11 +36,11 @@ pred_Ori = y(pred_length(1), 3);
 % plot(PathX(chosen_point-100:chosen_point+300), PathY(chosen_point-100:chosen_point+300))
 % plot(y(:,1),y(:,2))
 % 
-% P0x = predicted_front_x
-% P0y = predicted_front_y
-% 
-% P1x = P0x + 1
-% P1y = P0y + tan(pred_Ori + pi/2)
+P0x = predicted_front_x
+P0y = predicted_front_y
+
+P1x = P0x + 1
+P1y = P0y + tan(pred_Ori + pi/2)
 % plot([P0x, P1x], [P0y, P1y])
 % 
 % legend('path', ...
