@@ -19,3 +19,4 @@ fc_last_w = params.Learnables.fc_last_weight;
 fc_last_b = params.Learnables.fc_last_bias;
 
 clear params
+save('SZTAKI_weights_and_biases')
