@@ -1,4 +1,4 @@
-function out = bbb(input)
+function out = get_net_prediction(input)
 
 global trained_net
 
