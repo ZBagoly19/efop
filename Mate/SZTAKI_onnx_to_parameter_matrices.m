@@ -1,7 +1,3 @@
-r% after running this, the workspace should be saved and it will hold the parameters 
-% of the neural network, loadable into a net created in matlab, 
-% usable with CarMaker
-
 modelfile = "E:\Workspaces\.spyder-py3\csak_WheAng__speed50_cc0_acc333___0_0.001_sched_300_0.69_bn_no_reg_no_net_DevAngsDistVel_WA___64_4_1499.onnx";
 params = importONNXFunction(modelfile, 'netFcn');
 
