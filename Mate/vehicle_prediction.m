@@ -1,9 +1,9 @@
 %% prediction time
-tspan_end = 2;
+tspan_end = 1;
 
 %% test data
 load('meas_cornercut0_speed50_acc333_longlong_sens.mat')
-chosen_point = 4000;
+chosen_point = 6000;
 X = Pos_X(chosen_point);
 Y = Pos_Y(chosen_point);
 Ori = Ori_Z(chosen_point);
@@ -36,11 +36,15 @@ pred_Ori = y(pred_length(1), 3);
 % plot(PathX(chosen_point-100:chosen_point+300), PathY(chosen_point-100:chosen_point+300))
 % plot(y(:,1),y(:,2))
 % 
-P0x = predicted_front_x
-P0y = predicted_front_y
+P0x = predicted_front_x;
+P0y = predicted_front_y;
 
-P1x = P0x + 1
-P1y = P0y + tan(pred_Ori + pi/2)
+P1x = P0x + 1;
+P1y = P0y + tan(pred_Ori + pi/2);
+
+P2x = P0x - 1;
+P2y = P0y - tan(pred_Ori + pi/2);
+
 % plot([P0x, P1x], [P0y, P1y])
 % 
 % legend('path', ...
@@ -51,9 +55,12 @@ P1y = P0y + tan(pred_Ori + pi/2)
 %% intersection
 perpendicular_line_x = [P0x, P1x]
 perpendicular_line_y = [P0y, P1y]
+perpendicular_line2_x = [P0x, P2x]
+perpendicular_line2_y = [P0y, P2y]
 % this uses Fast and Robust Curve Intersections
 robust = 1;
 [x0, y0, iout, jout] = intersections(PathX, PathY, perpendicular_line_x, perpendicular_line_y, robust)
+[x02, y02, iout2, jout2] = intersections(PathX, PathY, perpendicular_line2_x, perpendicular_line2_y, robust)
 
 % figure(2)
 % axis equal
@@ -85,24 +92,25 @@ hold on
 plot(PathX(chosen_point-100:chosen_point+300), PathY(chosen_point-100:chosen_point+300));
 plot(y(:,1),y(:,2));
 
-P0x = predicted_front_x;
-P0y = predicted_front_y;
-
-P1x = P0x + 1;
-P1y = P0y + tan(pred_Ori + pi/2);
 plot([P0x, P1x], [P0y, P1y]);
+plot([P0x, P2x], [P0y, P2y]);
 
 plot(x0, y0, 'o');
+plot(x02, y02, 'o');
 plot(predicted_front_x, predicted_front_y, 'o');
 
 legend('path', ...
     'prediction of middle of rear axel', ...
-    'perpendicular line to orientation from middle of front axel', ...
+    'perpendicular line to orientation from middle of front axel to the left', ...
+    'perpendicular line to orientation from middle of front axel to the right', ...
     'intersection', ...
-    'middle of front axel')
+    'predicted middle of front axel')
 
-LATERAL_ERROR = sqrt((predicted_front_x-x0)*(predicted_front_x-x0) + (predicted_front_y-y0)*(predicted_front_y-y0))
-
+if isempty(x0)
+    LATERAL_ERROR = sqrt((predicted_front_x-x02)*(predicted_front_x-x02) + (predicted_front_y-y02)*(predicted_front_y-y02))
+else
+    LATERAL_ERROR = sqrt((predicted_front_x-x0)*(predicted_front_x-x0) + (predicted_front_y-y0)*(predicted_front_y-y0))
+end
 
 %% functions
 function [qx, qy] = rotate_and_translate(ox, oy, angle, tra)
