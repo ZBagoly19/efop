@@ -496,8 +496,14 @@ class trainClass():
             self.scheduler.step()
             
             if epoch % settings.SAVE_EVERY_EPOCH == settings.SAVE_EVERY_EPOCH - 1:
-                now = datetime.now()
-                path = os.path.join(settings.net_name + '  ' + now.strftime("%Y-%m-%d %H-%M-%S"))
+                #ellenorizzuk az elso szabad net_name__sorszam formatumu filenevet es oda mentjuk
+                path_i = 1
+                path = settings.net_name + "__{}".format(path_i)
+                while os.path.exists(path):
+                    path = settings.net_name + "__{}".format(path_i)
+                    path_i += 1
+                # now = datetime.now()
+                # path = os.path.join(settings.net_name + '  ' + now.strftime("%Y-%m-%d %H-%M-%S"))
                 #path = os.path.join(settings.net_name + '  ' + '0')
                 print(path)
                 print('\n')
@@ -521,4 +527,11 @@ class trainClass():
             'losses__width_{}_depth_{}_lr_{}_LearnRateDropPeriod_{}_LearnRateDropFactor_{}.npy'.format(
                 settings.width, settings.num_of_layers, settings.learn_rate, settings.LearnRateDropPeriod, settings.LearnRateDropFactor), self.losses)
         return nets
-    #train()
+    
+
+if __name__ == '__main__':
+    trainClass = trainClass()
+
+    # megadott valtozok nelkul a default lesz
+    trainClass.setup()
+    my_nets0 = trainClass.train()
