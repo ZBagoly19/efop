@@ -344,7 +344,7 @@ if parsed_path[0] == "fc1":
 if parsed_path[0] == "fc2":
     net = Net_fc2()
 if parsed_path[0] == "cnn1":
-    net = Net_conv1()()
+    net = Net_conv1()
 net.load_state_dict(checkpoint['state_dict'])
 net.eval()
 
