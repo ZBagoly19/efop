@@ -523,9 +523,9 @@ class trainClass():
                               'num_of_layers': settings.num_of_layers, 'width': settings.width, 'FILE_PRE': settings.FILE_PRE}
                 torch.save(checkpoint, path)
                 self.net.train()
-        np.save(settings.FILE_PRE + 
-            'losses__width_{}_depth_{}_lr_{}_LearnRateDropPeriod_{}_LearnRateDropFactor_{}.npy'.format(
-                settings.width, settings.num_of_layers, settings.learn_rate, settings.LearnRateDropPeriod, settings.LearnRateDropFactor), self.losses)
+        now = datetime.now()
+        path = os.path.join(settings.net_name + '  ' + now.strftime("%Y-%m-%d %H-%M-%S"))
+        np.save(path, self.losses)
         return nets
     
 
