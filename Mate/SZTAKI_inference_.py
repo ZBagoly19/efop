@@ -2,7 +2,7 @@ import os
 import math
 import numpy as np
 ### itt kell megadni a filenevet ###
-PATH = 'fc2  2022-12-05 13-53-14'
+PATH = 'fc2__1'
 
 ##############################################################################
 # ezt nem kell piszkalni
@@ -338,7 +338,7 @@ class Net_fc2(nn.Module):
         return x
 
 
-parsed_path = PATH.split("  ")
+parsed_path = PATH.split("__")
 if parsed_path[0] == "fc1":
     net = Net_fc1()
 if parsed_path[0] == "fc2":
